@@ -1,4 +1,4 @@
-package main
+package schedule_db_data
 
 import (
 	"bytes"
