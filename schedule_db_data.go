@@ -5,9 +5,27 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
 	"strings"
 )
+
+type Subject struct {
+	Id          int     `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+}
+
+type Room struct {
+	Id    int    `json:"id"`
+	Name  string `json:"name"`
+	Wing  *int   `json:"wing"`
+	Floor *int   `json:"floor"`
+}
+
+type Class struct {
+	Id        int    `json:"id"`
+	Number    int    `json:"number"`
+	Character string `json:"сharacter"`
+}
 
 type Lesson struct {
 	Number int    `json:"number"`
@@ -44,41 +62,30 @@ type Days []Day
 // Сканер массива расписаний
 func (d *Days) Scan(src interface{}) (err error) {
 
-	// Массив байтов
-	data := []byte{}
-
-	// Приведение к байтам и запись в массив
-	if val, ok := src.([]byte); ok {
-		data = val
-	} else if val, ok := src.([]byte); ok {
-		data = []byte(val)
-	} else if src == nil {
-		return errors.New("couldn't convert db data to []byte")
-	}
-
-	// Новый reader для массива
-	reader := bytes.NewReader(data)
-
-	// Считываем байты
-	bdata, err := ioutil.ReadAll(reader)
+	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
+	str, err := scan_prepare(src)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	// Удаляем экранирование и лишние скобки в начале и конце
-	str := strings.ReplaceAll(string(bdata)[1:len(string(bdata))-1], "\\", "")
-	// Удаляем лишние кавычки
-	str = strings.ReplaceAll(str, "\"{", "{")
-	str = strings.ReplaceAll(str, "}\"", "}")
-	str = "[" + str + "]"
+	// Считывание данных из массива байтов
+	err = d.scan_schedules(str)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *Days) scan_schedules(src []byte) (err error) {
 
 	// Объявляем карту с строчным ключём и значением в виде интерфейса
 	var day_maps []map[string]interface{}
 
 	// Записываем значения в карту
-	err = json.Unmarshal([]byte(str), &day_maps)
+	err = json.Unmarshal([]byte(src), &day_maps)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	day_array := Days{}
@@ -89,24 +96,28 @@ func (d *Days) Scan(src interface{}) (err error) {
 		day_date := ""
 
 		// Проверяем наличие нужного ключа
-		if day_map["Date"] != nil {
-			if val, ok := day_map["Date"].(string); ok {
+		if day_map["date"] != nil {
+			if val, ok := day_map["date"].(string); ok {
 				day_date = val
+			} else {
+				return errors.New("couldn't covert 'date' to string")
 			}
+		} else {
+			return errors.New("day has no 'date'")
 		}
 
 		sch_array := Schedules{}
 
 		// Проверяем наличие нужного ключа
-		if day_map["Schedule"] != nil {
+		if day_map["schedule"] != nil {
 
 			// Приводим нужное значение к типу "массив интерфейсов"
 			var lessons []interface{}
 
-			if val, ok := day_map["Schedule"].([]interface{}); ok {
+			if val, ok := day_map["schedule"].([]interface{}); ok {
 				lessons = val
 			} else {
-				return errors.New("couldn't convert Schedules to []interface{}")
+				return errors.New("couldn't convert array of 'schedule' to []interface{}")
 			}
 
 			// Итерируемся по массиву
@@ -121,36 +132,36 @@ func (d *Days) Scan(src interface{}) (err error) {
 				if val, ok := lesson.(map[string]interface{}); ok {
 					lesson_map = val
 				} else {
-					return errors.New("couldn't convert Schedule to map[string]interface{}")
+					return errors.New("couldn't convert 'schedule' to map[string]interface{}")
 				}
 
 				// Проверяем наличие нужного ключа
-				if lesson_map["Class"] != nil {
+				if lesson_map["class"] != nil {
 
 					// Записываем класс
-					if val, ok := lesson_map["Class"].(string); ok {
+					if val, ok := lesson_map["class"].(string); ok {
 						sch.Class = val
 					} else {
-						return errors.New("couldn't convert Class' name to string")
+						return errors.New("couldn't convert 'name' of 'class' to string")
 					}
 
 				} else {
-					return errors.New("Schedule has no Class key")
+					return errors.New("'schedule' has no 'class' key")
 				}
 
 				// Массив уроков
 				les_array := Lessons{}
 
 				// Проверяем наличие нужного ключа
-				if lesson_map["Lessons"] != nil {
+				if lesson_map["lessons"] != nil {
 
 					// Приводим интерфейс к типу: "массив интерфейсов"
 					var lesson_array []interface{}
 
-					if val, ok := lesson_map["Lessons"].([]interface{}); ok {
+					if val, ok := lesson_map["lessons"].([]interface{}); ok {
 						lesson_array = val
 					} else {
-						return errors.New("couldn't convert Lessons to []interface{}")
+						return errors.New("couldn't convert 'lessons' to []interface{}")
 					}
 
 					// Если массив не пустой
@@ -165,46 +176,46 @@ func (d *Days) Scan(src interface{}) (err error) {
 							if val, ok := lesson_element.(map[string]interface{}); ok {
 								lesson_element_map = val
 							} else {
-								return errors.New("couldn't convert Lesson to map[string]interface{}")
+								return errors.New("couldn't convert 'lesson' to map[string]interface{}")
 							}
 
 							// Проверяем наличие нужного ключа
-							if lesson_element_map["Name"] != nil {
+							if lesson_element_map["name"] != nil {
 
-								if val, ok := lesson_element_map["Name"].(string); ok {
+								if val, ok := lesson_element_map["name"].(string); ok {
 									les.Name = val
 								} else {
-									return errors.New("couldn't convert Lesson's name to string")
+									return errors.New("couldn't convert 'name' of 'lesson' to string")
 								}
 
 							} else {
-								return errors.New("Lesson has no Name field")
+								return errors.New("'lesson' has no 'name' field")
 							}
 
 							// Проверяем наличие нужного ключа
-							if lesson_element_map["Number"] != nil {
+							if lesson_element_map["number"] != nil {
 
 								// Приводим к int
-								if val, ok := lesson_element_map["Number"].(float64); ok {
+								if val, ok := lesson_element_map["number"].(float64); ok {
 									les.Number = int(val)
 								} else {
-									return errors.New("couldn't convert Lesson's number to int")
+									return errors.New("couldn't convert 'number' of 'lesson' to int")
 								}
 
 							} else {
-								return errors.New("Lesson has no Number field")
+								return errors.New("'lesson' has no 'number' field")
 							}
 
 							// Проверяем наличие нужного ключа
-							if lesson_element_map["Room"] != nil {
+							if lesson_element_map["room"] != nil {
 
-								if val, ok := lesson_element_map["Room"].(string); ok {
+								if val, ok := lesson_element_map["room"].(string); ok {
 									les.Room = val
 								} else {
-									return errors.New("couldn't convert Room's name to string")
+									return errors.New("couldn't convert 'name' of 'room' to string")
 								}
 							} else {
-								return errors.New("Room has no Name field")
+								return errors.New("'room' has no 'name' field")
 							}
 
 							// Записываем урок в массив уроков
@@ -214,7 +225,7 @@ func (d *Days) Scan(src interface{}) (err error) {
 					}
 
 				} else {
-					return errors.New("Schedule has no Lessons key")
+					return errors.New("'schedule' has no 'lessons' key")
 				}
 
 				// Записываем уроки
@@ -225,7 +236,7 @@ func (d *Days) Scan(src interface{}) (err error) {
 
 			}
 		} else {
-			return errors.New("Day has no Schedule key")
+			return errors.New("'day' has no 'schedule' key")
 		}
 
 		// Записываем дни
@@ -237,21 +248,40 @@ func (d *Days) Scan(src interface{}) (err error) {
 	return nil
 }
 
-type Subject struct {
-	Id          int     `json:"id"`
-	Name        string  `json:"name"`
-	Description *string `json:"description"`
+type Week struct {
+	Start string `json:"start"`
+	Data  Days   `json:"data"`
 }
 
-type Room struct {
-	Id    int    `json:"id"`
-	Name  string `json:"name"`
-	Wing  *int   `json:"wing"`
-	Floor *int   `json:"floor"`
-}
+func scan_prepare(src interface{}) (prepared_bytes []byte, err error) {
 
-type Class struct {
-	Id        int    `json:"id"`
-	Number    int    `json:"number"`
-	Character string `json:"сharacter"`
+	// Массив байтов
+	data := []byte{}
+
+	// Приведение к байтам и запись в массив
+	if val, ok := src.([]byte); ok {
+		data = val
+	} else if val, ok := src.([]byte); ok {
+		data = []byte(val)
+	} else if src == nil {
+		return []byte{}, errors.New("couldn't convert db data to []byte")
+	}
+
+	// Новый reader для массива
+	reader := bytes.NewReader(data)
+
+	// Считываем байты
+	bdata, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	// Удаляем экранирование и лишние скобки в начале и конце
+	str := strings.ReplaceAll(string(bdata)[1:len(string(bdata))-1], "\\", "")
+	// Удаляем лишние кавычки
+	str = strings.ReplaceAll(str, "\"{", "{")
+	str = strings.ReplaceAll(str, "}\"", "}")
+	str = "[" + str + "]"
+
+	return []byte(str), nil
 }
