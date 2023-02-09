@@ -44,7 +44,7 @@ type Schedules []Schedule
 
 type Day struct {
 	Date     string    `json:"date"`
-	Schedule Schedules `json:"schedules"`
+	Schedule Schedules `json:"schedule"`
 }
 
 func NewDay(d string, s Schedules) Day {
