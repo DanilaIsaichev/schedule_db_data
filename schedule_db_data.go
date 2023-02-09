@@ -63,13 +63,13 @@ type Days []Day
 func (d *Days) Scan(src interface{}) (err error) {
 
 	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
-	str, err := scan_prepare(src)
+	byte_str, err := scan_prepare(src)
 	if err != nil {
 		return err
 	}
 
 	// Считывание данных из массива байтов
-	err = d.scan_schedules(str)
+	err = d.scan_days(byte_str)
 	if err != nil {
 		return err
 	}
@@ -77,13 +77,13 @@ func (d *Days) Scan(src interface{}) (err error) {
 	return nil
 }
 
-func (d *Days) scan_schedules(src []byte) (err error) {
+func (d *Days) scan_days(src []byte) (err error) {
 
 	// Объявляем карту с строчным ключём и значением в виде интерфейса
 	var day_maps []map[string]interface{}
 
 	// Записываем значения в карту
-	err = json.Unmarshal([]byte(src), &day_maps)
+	err = json.Unmarshal(src, &day_maps)
 	if err != nil {
 		return err
 	}
@@ -251,6 +251,59 @@ func (d *Days) scan_schedules(src []byte) (err error) {
 type Week struct {
 	Start string `json:"start"`
 	Data  Days   `json:"data"`
+}
+
+func (w *Week) scan_schedules(src []byte) (err error) {
+
+	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
+	byte_str, err := scan_prepare(src)
+	if err != nil {
+		return err
+	}
+
+	// Объявляем карту с строчным ключём и значением в виде интерфейса
+	var week_map map[string]interface{}
+
+	// Записываем значения в карту
+	err = json.Unmarshal(byte_str, &week_map)
+	if err != nil {
+		return err
+	}
+
+	start_date := ""
+
+	if week_map["start"] != nil {
+		if val, ok := week_map["start"].(string); ok {
+			start_date = val
+		} else {
+			return errors.New("couldn't conver week start date to string")
+		}
+	} else {
+		return errors.New("no 'start' found")
+	}
+
+	days := Days{}
+
+	if week_map["data"] != nil {
+
+		if val, ok := week_map["data"].([]byte); ok {
+
+			err := days.scan_days(val)
+			if err != nil {
+				return err
+			}
+
+		} else {
+			return errors.New("couldn't conver week start date to string")
+		}
+	} else {
+		return errors.New("no 'start' found")
+	}
+
+	w.Start = start_date
+	w.Data = days
+
+	return nil
 }
 
 func scan_prepare(src interface{}) (prepared_bytes []byte, err error) {
