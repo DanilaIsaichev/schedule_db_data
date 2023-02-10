@@ -2,6 +2,7 @@ package schedule_db_data
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -79,11 +80,18 @@ func (d *Days) Scan(src interface{}) (err error) {
 
 func (d *Days) scan_days(src []byte) (err error) {
 
+	// Удаляем экранирование и лишние скобки в начале и конце
+	str := strings.ReplaceAll(string(src)[1:len(string(src))-1], "\\", "")
+	// Удаляем лишние кавычки
+	str = strings.ReplaceAll(str, "\"{", "{")
+	str = strings.ReplaceAll(str, "}\"", "}")
+	str = "[" + str + "]"
+
 	// Объявляем карту с строчным ключём и значением в виде интерфейса
 	var day_maps []map[string]interface{}
 
 	// Записываем значения в карту
-	err = json.Unmarshal(src, &day_maps)
+	err = json.Unmarshal([]byte(str), &day_maps)
 	if err != nil {
 		return err
 	}
@@ -253,12 +261,12 @@ type Week struct {
 	Data  Days   `json:"data"`
 }
 
-func (w *Week) scan_schedules(src []byte) (err error) {
+func UnmarshalWeek(src interface{}) (week Week, err error) {
 
 	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
 	byte_str, err := scan_prepare(src)
 	if err != nil {
-		return err
+		return Week{}, err
 	}
 
 	// Объявляем карту с строчным ключём и значением в виде интерфейса
@@ -267,7 +275,7 @@ func (w *Week) scan_schedules(src []byte) (err error) {
 	// Записываем значения в карту
 	err = json.Unmarshal(byte_str, &week_map)
 	if err != nil {
-		return err
+		return Week{}, err
 	}
 
 	start_date := ""
@@ -276,10 +284,10 @@ func (w *Week) scan_schedules(src []byte) (err error) {
 		if val, ok := week_map["start"].(string); ok {
 			start_date = val
 		} else {
-			return errors.New("couldn't conver week start date to string")
+			return Week{}, errors.New("couldn't conver week start date to string")
 		}
 	} else {
-		return errors.New("no 'start' found")
+		return Week{}, errors.New("no 'start' found")
 	}
 
 	days := Days{}
@@ -290,20 +298,22 @@ func (w *Week) scan_schedules(src []byte) (err error) {
 
 			err := days.scan_days(val)
 			if err != nil {
-				return err
+				return Week{}, err
 			}
 
 		} else {
-			return errors.New("couldn't conver week start date to string")
+			return Week{}, errors.New("couldn't conver week start date to string")
 		}
 	} else {
-		return errors.New("no 'start' found")
+		return Week{}, errors.New("no 'start' found")
 	}
+
+	w := Week{}
 
 	w.Start = start_date
 	w.Data = days
 
-	return nil
+	return w, nil
 }
 
 func scan_prepare(src interface{}) (prepared_bytes []byte, err error) {
@@ -329,12 +339,17 @@ func scan_prepare(src interface{}) (prepared_bytes []byte, err error) {
 		return []byte{}, err
 	}
 
-	// Удаляем экранирование и лишние скобки в начале и конце
-	str := strings.ReplaceAll(string(bdata)[1:len(string(bdata))-1], "\\", "")
-	// Удаляем лишние кавычки
-	str = strings.ReplaceAll(str, "\"{", "{")
-	str = strings.ReplaceAll(str, "}\"", "}")
-	str = "[" + str + "]"
+	return bdata, nil
+}
 
-	return []byte(str), nil
+func DB_connection(db_name string, username string, password string, port string) (db_conn *sql.DB, err error) {
+
+	connection_string := "host=localhost port=" + port + " user=" + username + " password=" + password + " dbname=" + db_name + " sslmode=disable"
+
+	db, err := sql.Open("postgres", connection_string)
+	if err != nil {
+		return db, err
+	}
+
+	return db, nil
 }
