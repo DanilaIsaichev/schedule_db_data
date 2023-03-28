@@ -35,6 +35,12 @@ type Lesson struct {
 	Teacher string `json:"teacher"`
 }
 
+type Teacher struct {
+	Id    int    `json:"id"`
+	Name  string `json:"name"`
+	Login string `json:"login"`
+}
+
 type Lessons []Lesson
 
 type Schedule struct {
