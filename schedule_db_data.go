@@ -231,7 +231,7 @@ func (d *Days) scan_days(src []byte) (err error) {
 							if lesson_element_map["teacher"] != nil {
 
 								if val, ok := lesson_element_map["teacher"].(string); ok {
-									les.Name = val
+									les.Teacher = val
 								} else {
 									return errors.New("couldn't convert name of 'teacher' to string")
 								}
