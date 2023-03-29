@@ -277,8 +277,11 @@ func (d *Days) scan_days(src []byte) (err error) {
 }
 
 type Week struct {
-	Start string `json:"start"`
-	Data  Days   `json:"data"`
+	Start    string `json:"start"`
+	Year     int    `json:"year"`
+	Parallel int    `json:"parallel"`
+	Is_Base  bool   `json:"is_base"`
+	Data     Days   `json:"data"`
 }
 
 func UnmarshalWeek(src interface{}) (week Week, err error) {
@@ -298,16 +301,44 @@ func UnmarshalWeek(src interface{}) (week Week, err error) {
 		return Week{}, err
 	}
 
-	start_date := ""
+	w := Week{}
 
 	if week_map["start"] != nil {
 		if val, ok := week_map["start"].(string); ok {
-			start_date = val
+			w.Start = val
 		} else {
 			return Week{}, errors.New("couldn't conver week start date to string")
 		}
+	}
+
+	if week_map["year"] != nil {
+		if val, ok := week_map["year"].(float64); ok {
+			w.Year = int(val)
+		} else {
+			return Week{}, errors.New("couldn't conver year to int")
+		}
 	} else {
-		return Week{}, errors.New("no 'start' found")
+		return Week{}, errors.New("no 'year' found")
+	}
+
+	if week_map["parallel"] != nil {
+		if val, ok := week_map["parallel"].(float64); ok {
+			w.Parallel = int(val)
+		} else {
+			return Week{}, errors.New("couldn't conver parallel to int")
+		}
+	} else {
+		return Week{}, errors.New("no 'parallel' found")
+	}
+
+	if week_map["is_base"] != nil {
+		if val, ok := week_map["is_base"].(bool); ok {
+			w.Is_Base = val
+		} else {
+			return Week{}, errors.New("couldn't conver is_base to bool")
+		}
+	} else {
+		return Week{}, errors.New("no 'is_base' found")
 	}
 
 	days := Days{}
@@ -328,9 +359,6 @@ func UnmarshalWeek(src interface{}) (week Week, err error) {
 		return Week{}, errors.New("no 'start' found")
 	}
 
-	w := Week{}
-
-	w.Start = start_date
 	w.Data = days
 
 	return w, nil
