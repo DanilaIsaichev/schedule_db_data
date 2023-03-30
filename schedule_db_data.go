@@ -41,6 +41,76 @@ type Teacher struct {
 	Login string `json:"login"`
 }
 
+func UnmarshalTeacher(src interface{}) (Teacher, string, error) {
+
+	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
+	byte_str, err := scan_prepare(src)
+	if err != nil {
+		return Teacher{}, "", err
+	}
+
+	// Объявляем карту с строчным ключём и значением в виде интерфейса
+	var teacher_map map[string]interface{}
+
+	// Записываем значения в карту
+	err = json.Unmarshal(byte_str, &teacher_map)
+	if err != nil {
+		return Teacher{}, "", err
+	}
+
+	t := Teacher{}
+	a := ""
+
+	if teacher_map["action"] != nil {
+		if val, ok := teacher_map["action"].(string); ok {
+			switch {
+			case val == "save":
+				a = "save"
+			case val == "delete":
+				a = "delete"
+			default:
+				return Teacher{}, "", errors.New("unknown action")
+			}
+		} else {
+			return Teacher{}, "", errors.New("couldn't conver action to string")
+		}
+	}
+
+	if teacher_map["teacher"] != nil {
+		if val, ok := teacher_map["teacher"].(map[string]interface{}); ok {
+
+			teacher := val
+
+			if teacher["name"] != nil {
+				if val, ok := teacher["name"].(string); ok {
+					t.Name = val
+				} else {
+					return Teacher{}, "", errors.New("couldn't teacher's name to string")
+				}
+			} else {
+				return Teacher{}, "", errors.New("no teacher's name found")
+			}
+
+			if teacher["login"] != nil {
+				if val, ok := teacher["login"].(string); ok {
+					t.Login = val
+				} else {
+					return Teacher{}, "", errors.New("couldn't teacher's login to string")
+				}
+			} else {
+				return Teacher{}, "", errors.New("no teacher's login found")
+			}
+
+		} else {
+			return Teacher{}, "", errors.New("couldn't teacher's struct to map[string]interface{}")
+		}
+	} else {
+		return Teacher{}, "", errors.New("no 'teacher' found")
+	}
+
+	return t, a, nil
+}
+
 type Lessons []Lesson
 
 type Schedule struct {
