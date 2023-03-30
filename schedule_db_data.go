@@ -15,6 +15,74 @@ type Subject struct {
 	Description *string `json:"description"`
 }
 
+func UnmarshalSubject(src interface{}) (Subject, string, error) {
+
+	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
+	byte_str, err := scan_prepare(src)
+	if err != nil {
+		return Subject{}, "", err
+	}
+
+	// Объявляем карту с строчным ключём и значением в виде интерфейса
+	var subject_map map[string]interface{}
+
+	// Записываем значения в карту
+	err = json.Unmarshal(byte_str, &subject_map)
+	if err != nil {
+		return Subject{}, "", err
+	}
+
+	s := Subject{}
+	a := ""
+
+	if subject_map["action"] != nil {
+		if val, ok := subject_map["action"].(string); ok {
+			switch {
+			case val == "save":
+				a = "save"
+			case val == "delete":
+				a = "delete"
+			default:
+				return Subject{}, "", errors.New("unknown action")
+			}
+		} else {
+			return Subject{}, "", errors.New("couldn't convert action to string")
+		}
+	}
+
+	if subject_map["subject"] != nil {
+		if val, ok := subject_map["subject"].(map[string]interface{}); ok {
+
+			subject := val
+
+			if subject["name"] != nil {
+				if val, ok := subject["name"].(string); ok {
+					s.Name = val
+				} else {
+					return Subject{}, "", errors.New("couldn't convert subject's name to string")
+				}
+			} else {
+				return Subject{}, "", errors.New("no subject's name found")
+			}
+
+			if subject["description"] != nil {
+				if val, ok := subject["description"].(string); ok {
+					*(s.Description) = val
+				} else {
+					return Subject{}, "", errors.New("couldn't convert subject's description to string")
+				}
+			}
+
+		} else {
+			return Subject{}, "", errors.New("couldn't convert subject's struct to map[string]interface{}")
+		}
+	} else {
+		return Subject{}, "", errors.New("no 'subject' found")
+	}
+
+	return s, a, nil
+}
+
 type Room struct {
 	Id    int    `json:"id"`
 	Name  string `json:"name"`
@@ -22,10 +90,163 @@ type Room struct {
 	Floor *int   `json:"floor"`
 }
 
+func UnmarshalRoom(src interface{}) (Room, string, error) {
+
+	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
+	byte_str, err := scan_prepare(src)
+	if err != nil {
+		return Room{}, "", err
+	}
+
+	// Объявляем карту с строчным ключём и значением в виде интерфейса
+	var room_map map[string]interface{}
+
+	// Записываем значения в карту
+	err = json.Unmarshal(byte_str, &room_map)
+	if err != nil {
+		return Room{}, "", err
+	}
+
+	r := Room{}
+	a := ""
+
+	if room_map["action"] != nil {
+		if val, ok := room_map["action"].(string); ok {
+			switch {
+			case val == "save":
+				a = "save"
+			case val == "delete":
+				a = "delete"
+			default:
+				return Room{}, "", errors.New("unknown action")
+			}
+		} else {
+			return Room{}, "", errors.New("couldn't convert action to string")
+		}
+	}
+
+	if room_map["room"] != nil {
+		if val, ok := room_map["room"].(map[string]interface{}); ok {
+
+			room := val
+
+			if room["name"] != nil {
+				if val, ok := room["name"].(string); ok {
+					r.Name = val
+				} else {
+					return Room{}, "", errors.New("couldn't convert rooms's name to string")
+				}
+			} else {
+				return Room{}, "", errors.New("no rooms's name found")
+			}
+
+			if room["wing"] != nil {
+				if val, ok := room["wing"].(float64); ok {
+					*(r.Wing) = int(val)
+				} else {
+					return Room{}, "", errors.New("couldn't convert room's wing to int")
+				}
+			}
+
+			if room["floor"] != nil {
+				if val, ok := room["floor"].(float64); ok {
+					*(r.Floor) = int(val)
+				} else {
+					return Room{}, "", errors.New("couldn't convert room's floor to string")
+				}
+			}
+		} else {
+			return Room{}, "", errors.New("couldn't convert room's struct to map[string]interface{}")
+		}
+	} else {
+		return Room{}, "", errors.New("no 'room' found")
+	}
+
+	return r, a, nil
+}
+
 type Class struct {
 	Id        int    `json:"id"`
 	Number    int    `json:"number"`
 	Character string `json:"сharacter"`
+}
+
+func UnmarshalClass(src interface{}) (Class, string, error) {
+
+	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
+	byte_str, err := scan_prepare(src)
+	if err != nil {
+		return Class{}, "", err
+	}
+
+	// Объявляем карту с строчным ключём и значением в виде интерфейса
+	var class_map map[string]interface{}
+
+	// Записываем значения в карту
+	err = json.Unmarshal(byte_str, &class_map)
+	if err != nil {
+		return Class{}, "", err
+	}
+
+	c := Class{}
+	a := ""
+
+	if class_map["action"] != nil {
+		if val, ok := class_map["action"].(string); ok {
+			switch {
+			case val == "save":
+				a = "save"
+			case val == "delete":
+				a = "delete"
+			default:
+				return Class{}, "", errors.New("unknown action")
+			}
+		} else {
+			return Class{}, "", errors.New("couldn't convert action to string")
+		}
+	}
+
+	if class_map["class"] != nil {
+		if val, ok := class_map["class"].(map[string]interface{}); ok {
+
+			class := val
+
+			if class["number"] != nil {
+				if val, ok := class["number"].(float64); ok {
+					if int(val) >= 1 && int(val) <= 1 {
+						c.Number = int(val)
+					} else {
+						return Class{}, "", errors.New("wrong class number")
+					}
+				} else {
+					return Class{}, "", errors.New("couldn't convert class' number to int")
+				}
+			} else {
+				return Class{}, "", errors.New("no class' number found")
+			}
+
+			if class["character"] != nil {
+				if val, ok := class["character"].(string); ok {
+					if len(val) == 1 {
+						c.Character = val
+					} else {
+						return Class{}, "", errors.New("wrong class character")
+					}
+				} else {
+					return Class{}, "", errors.New("couldn't convert class character to string")
+				}
+			} else {
+				return Class{}, "", errors.New("no class character found")
+			}
+
+		} else {
+			return Class{}, "", errors.New("couldn't convert class' struct to map[string]interface{}")
+		}
+	} else {
+		return Class{}, "", errors.New("no 'class' found")
+	}
+
+	return c, a, nil
 }
 
 type Lesson struct {
@@ -72,7 +293,7 @@ func UnmarshalTeacher(src interface{}) (Teacher, string, error) {
 				return Teacher{}, "", errors.New("unknown action")
 			}
 		} else {
-			return Teacher{}, "", errors.New("couldn't conver action to string")
+			return Teacher{}, "", errors.New("couldn't convert action to string")
 		}
 	}
 
@@ -85,7 +306,7 @@ func UnmarshalTeacher(src interface{}) (Teacher, string, error) {
 				if val, ok := teacher["name"].(string); ok {
 					t.Name = val
 				} else {
-					return Teacher{}, "", errors.New("couldn't teacher's name to string")
+					return Teacher{}, "", errors.New("couldn't convert teacher's name to string")
 				}
 			} else {
 				return Teacher{}, "", errors.New("no teacher's name found")
@@ -95,14 +316,14 @@ func UnmarshalTeacher(src interface{}) (Teacher, string, error) {
 				if val, ok := teacher["login"].(string); ok {
 					t.Login = val
 				} else {
-					return Teacher{}, "", errors.New("couldn't teacher's login to string")
+					return Teacher{}, "", errors.New("couldn't convert teacher's login to string")
 				}
 			} else {
 				return Teacher{}, "", errors.New("no teacher's login found")
 			}
 
 		} else {
-			return Teacher{}, "", errors.New("couldn't teacher's struct to map[string]interface{}")
+			return Teacher{}, "", errors.New("couldn't convertteacher's struct to map[string]interface{}")
 		}
 	} else {
 		return Teacher{}, "", errors.New("no 'teacher' found")
@@ -185,7 +406,7 @@ func (d *Days) scan_days(src []byte) (err error) {
 			if val, ok := day_map["date"].(string); ok {
 				day_date = val
 			} else {
-				return errors.New("couldn't covert 'date' to string")
+				return errors.New("couldn't convertcovert 'date' to string")
 			}
 		} else {
 			return errors.New("day has no 'date'")
@@ -391,7 +612,7 @@ func UnmarshalWeek(src interface{}) (week Week, err error) {
 		if val, ok := week_map["start"].(string); ok {
 			w.Start = val
 		} else {
-			return Week{}, errors.New("couldn't conver week start date to string")
+			return Week{}, errors.New("couldn't convert week start date to string")
 		}
 	}
 
@@ -399,7 +620,7 @@ func UnmarshalWeek(src interface{}) (week Week, err error) {
 		if val, ok := week_map["year"].(float64); ok {
 			w.Year = int(val)
 		} else {
-			return Week{}, errors.New("couldn't conver year to int")
+			return Week{}, errors.New("couldn't convert year to int")
 		}
 	} else {
 		return Week{}, errors.New("no 'year' found")
@@ -409,7 +630,7 @@ func UnmarshalWeek(src interface{}) (week Week, err error) {
 		if val, ok := week_map["parallel"].(float64); ok {
 			w.Parallel = int(val)
 		} else {
-			return Week{}, errors.New("couldn't conver parallel to int")
+			return Week{}, errors.New("couldn't convert parallel to int")
 		}
 	} else {
 		return Week{}, errors.New("no 'parallel' found")
@@ -419,7 +640,7 @@ func UnmarshalWeek(src interface{}) (week Week, err error) {
 		if val, ok := week_map["is_base"].(bool); ok {
 			w.Is_Base = val
 		} else {
-			return Week{}, errors.New("couldn't conver is_base to bool")
+			return Week{}, errors.New("couldn't convert is_base to bool")
 		}
 	} else {
 		return Week{}, errors.New("no 'is_base' found")
@@ -437,7 +658,7 @@ func UnmarshalWeek(src interface{}) (week Week, err error) {
 			}
 
 		} else {
-			return Week{}, errors.New("couldn't conver week start date to string")
+			return Week{}, errors.New("couldn't convert week start date to string")
 		}
 	} else {
 		return Week{}, errors.New("no 'start' found")
