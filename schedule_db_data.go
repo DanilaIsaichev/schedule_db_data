@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"strings"
 )
 
@@ -29,10 +29,10 @@ type Class struct {
 }
 
 type Lesson struct {
-	Number  int    `json:"number"`
-	Name    string `json:"name"`
-	Room    string `json:"room"`
-	Teacher string `json:"teacher"`
+	Number  int     `json:"number"`
+	Name    string  `json:"name"`
+	Room    string  `json:"room"`
+	Teacher Teacher `json:"teacher"`
 }
 
 type Teacher struct {
@@ -236,10 +236,24 @@ func (d *Days) scan_days(src []byte) (err error) {
 							// Проверяем наличие нужного ключа
 							if lesson_element_map["teacher"] != nil {
 
-								if val, ok := lesson_element_map["teacher"].(string); ok {
-									les.Teacher = val
+								if val, ok := lesson_element_map["teacher"].(map[string]interface{}); ok {
+
+									teacher := val
+
+									if val, ok := teacher["name"].(string); ok {
+										les.Teacher.Name = val
+									} else {
+										return errors.New("couldn't convert name of 'teacher' to string")
+									}
+
+									if val, ok := teacher["login"].(string); ok {
+										les.Teacher.Login = val
+									} else {
+										return errors.New("couldn't convert login of 'teacher' to string")
+									}
+
 								} else {
-									return errors.New("couldn't convert name of 'teacher' to string")
+									return errors.New("couldn't convert teacher object to to map[string]interface{}")
 								}
 
 							} else {
@@ -382,7 +396,7 @@ func scan_prepare(src interface{}) (prepared_bytes []byte, err error) {
 	reader := bytes.NewReader(data)
 
 	// Считываем байты
-	bdata, err := ioutil.ReadAll(reader)
+	bdata, err := io.ReadAll(reader)
 	if err != nil {
 		return []byte{}, err
 	}
