@@ -224,7 +224,7 @@ func UnmarshalClass(src interface{}) (Class, string, error) {
 
 			if class["number"] != nil {
 				if val, ok := class["number"].(float64); ok {
-					if int(val) >= 1 && int(val) <= 1 {
+					if int(val) >= 1 && int(val) <= 11 {
 						c.Number = int(val)
 					} else {
 						return Class{}, "", errors.New("wrong class number")
