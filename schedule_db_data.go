@@ -7,13 +7,95 @@ import (
 	"errors"
 	"io"
 	"strings"
-	"unicode/utf8"
 )
 
 type Subject struct {
 	Id          int     `json:"id"`
 	Name        string  `json:"name"`
 	Description *string `json:"description"`
+}
+
+type Subjects []Subject
+
+// Сканер массива учителей
+func (s *Subjects) Scan(src interface{}) (err error) {
+
+	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
+	byte_str, err := scan_prepare(src)
+	if err != nil {
+		return err
+	}
+
+	// Считывание данных из массива байтов
+	err = s.scan_subjects(byte_str)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Subjects) scan_subjects(src []byte) (err error) {
+
+	// Удаляем экранирование и лишние скобки в начале и конце
+	str := strings.ReplaceAll(string(src)[1:len(string(src))-1], "\\", "")
+	// Удаляем лишние кавычки
+	str = strings.ReplaceAll(str, "\"{", "{")
+	str = strings.ReplaceAll(str, "}\"", "}")
+	str = "[" + str + "]"
+
+	// Объявляем карту с строчным ключём и значением в виде интерфейса
+	var subject_maps []map[string]interface{}
+
+	// Записываем значения в карту
+	err = json.Unmarshal([]byte(str), &subject_maps)
+	if err != nil {
+		return err
+	}
+
+	subjects_array := Subjects{}
+
+	// Итерируемся по карте
+	for _, subject_map := range subject_maps {
+
+		subject := Subject{}
+
+		// Проверяем наличие нужного ключа
+		if subject_map["id"] != nil {
+			if val, ok := subject_map["id"].(float64); ok {
+				subject.Id = int(val)
+			} else {
+				return errors.New("couldn't convert 'id' to int")
+			}
+		} else {
+			return errors.New("subject has no 'id'")
+		}
+
+		if subject_map["name"] != nil {
+			if val, ok := subject_map["name"].(string); ok {
+				subject.Name = val
+			} else {
+				return errors.New("couldn't convert 'name' to string")
+			}
+		} else {
+			return errors.New("subject has no 'name'")
+		}
+
+		if subject_map["description"] != nil {
+			if val, ok := subject_map["description"].(string); ok {
+				subject.Description = new(string)
+				*subject.Description = val
+			} else {
+				return errors.New("couldn't convert 'login' to string")
+			}
+		}
+
+		subjects_array = append(subjects_array, subject)
+	}
+
+	*s = subjects_array
+
+	return nil
 }
 
 func UnmarshalSubject(src interface{}) (Subject, string, error) {
@@ -94,6 +176,98 @@ type Room struct {
 	Name  string `json:"name"`
 	Wing  *int   `json:"wing"`
 	Floor *int   `json:"floor"`
+}
+
+type Rooms []Room
+
+// Сканер массива учителей
+func (r *Rooms) Scan(src interface{}) (err error) {
+
+	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
+	byte_str, err := scan_prepare(src)
+	if err != nil {
+		return err
+	}
+
+	// Считывание данных из массива байтов
+	err = r.scan_rooms(byte_str)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Rooms) scan_rooms(src []byte) (err error) {
+
+	// Удаляем экранирование и лишние скобки в начале и конце
+	str := strings.ReplaceAll(string(src)[1:len(string(src))-1], "\\", "")
+	// Удаляем лишние кавычки
+	str = strings.ReplaceAll(str, "\"{", "{")
+	str = strings.ReplaceAll(str, "}\"", "}")
+	str = "[" + str + "]"
+
+	// Объявляем карту с строчным ключём и значением в виде интерфейса
+	var room_maps []map[string]interface{}
+
+	// Записываем значения в карту
+	err = json.Unmarshal([]byte(str), &room_maps)
+	if err != nil {
+		return err
+	}
+
+	rooms_array := Rooms{}
+
+	// Итерируемся по карте
+	for _, room_map := range room_maps {
+
+		room := Room{}
+
+		// Проверяем наличие нужного ключа
+		if room_map["id"] != nil {
+			if val, ok := room_map["id"].(float64); ok {
+				room.Id = int(val)
+			} else {
+				return errors.New("couldn't convert 'id' to int")
+			}
+		} else {
+			return errors.New("room has no 'id'")
+		}
+
+		if room_map["name"] != nil {
+			if val, ok := room_map["name"].(string); ok {
+				room.Name = val
+			} else {
+				return errors.New("couldn't convert 'name' to string")
+			}
+		} else {
+			return errors.New("room has no 'name'")
+		}
+
+		if room_map["wing"] != nil {
+			if val, ok := room_map["wing"].(float64); ok {
+				room.Wing = new(int)
+				*room.Wing = int(val)
+			} else {
+				return errors.New("couldn't convert 'wing' to int")
+			}
+		}
+
+		if room_map["floor"] != nil {
+			if val, ok := room_map["floor"].(float64); ok {
+				room.Floor = new(int)
+				*room.Floor = int(val)
+			} else {
+				return errors.New("couldn't convert 'floor' to int")
+			}
+		}
+
+		rooms_array = append(rooms_array, room)
+	}
+
+	*r = rooms_array
+
+	return nil
 }
 
 func UnmarshalRoom(src interface{}) (Room, string, error) {
@@ -181,6 +355,98 @@ type Class struct {
 	Character string `json:"сharacter"`
 }
 
+type Classes []Class
+
+// Сканер массива учителей
+func (c *Classes) Scan(src interface{}) (err error) {
+
+	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
+	byte_str, err := scan_prepare(src)
+	if err != nil {
+		return err
+	}
+
+	// Считывание данных из массива байтов
+	err = c.scan_classes(byte_str)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Classes) scan_classes(src []byte) (err error) {
+
+	// Удаляем экранирование и лишние скобки в начале и конце
+	str := strings.ReplaceAll(string(src)[1:len(string(src))-1], "\\", "")
+	// Удаляем лишние кавычки
+	str = strings.ReplaceAll(str, "\"{", "{")
+	str = strings.ReplaceAll(str, "}\"", "}")
+	str = "[" + str + "]"
+
+	// Объявляем карту с строчным ключём и значением в виде интерфейса
+	var class_maps []map[string]interface{}
+
+	// Записываем значения в карту
+	err = json.Unmarshal([]byte(str), &class_maps)
+	if err != nil {
+		return err
+	}
+
+	classes_array := Classes{}
+
+	// Итерируемся по карте
+	for _, class_map := range class_maps {
+
+		class := Class{}
+
+		// Проверяем наличие нужного ключа
+		if class_map["id"] != nil {
+			if val, ok := class_map["id"].(float64); ok {
+				class.Id = int(val)
+			} else {
+				return errors.New("couldn't convert 'id' to int")
+			}
+		} else {
+			return errors.New("class has no 'id'")
+		}
+
+		if class_map["number"] != nil {
+			if val, ok := class_map["number"].(float64); ok {
+				if int(val) >= 1 && int(val) <= 11 {
+					class.Number = int(val)
+				} else {
+					return errors.New("class number not in [1:11]")
+				}
+			} else {
+				return errors.New("couldn't convert 'number' to int")
+			}
+		} else {
+			return errors.New("class has no 'number'")
+		}
+
+		if class_map["character"] != nil {
+			if val, ok := class_map["character"].(string); ok {
+				if len([]rune(val)) == 1 {
+					class.Character = val
+				} else {
+					return errors.New("wrong class character")
+				}
+			} else {
+				return errors.New("couldn't convert 'character' to string")
+			}
+		} else {
+			return errors.New("class has no 'character'")
+		}
+
+		classes_array = append(classes_array, class)
+	}
+
+	*c = classes_array
+
+	return nil
+}
+
 func UnmarshalClass(src interface{}) (Class, string, error) {
 
 	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
@@ -239,7 +505,7 @@ func UnmarshalClass(src interface{}) (Class, string, error) {
 
 			if class["character"] != nil {
 				if val, ok := class["character"].(string); ok {
-					if utf8.RuneCountInString(val) == 1 {
+					if len([]rune(val)) == 1 {
 						c.Character = val
 					} else {
 						return Class{}, "", errors.New("wrong class character")
@@ -272,6 +538,90 @@ type Teacher struct {
 	Id    int    `json:"id"`
 	Name  string `json:"name"`
 	Login string `json:"login"`
+}
+
+type Teachers []Teacher
+
+// Сканер массива учителей
+func (t *Teachers) Scan(src interface{}) (err error) {
+
+	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
+	byte_str, err := scan_prepare(src)
+	if err != nil {
+		return err
+	}
+
+	// Считывание данных из массива байтов
+	err = t.scan_teachers(byte_str)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *Teachers) scan_teachers(src []byte) (err error) {
+
+	// Удаляем экранирование и лишние скобки в начале и конце
+	str := strings.ReplaceAll(string(src)[1:len(string(src))-1], "\\", "")
+	// Удаляем лишние кавычки
+	str = strings.ReplaceAll(str, "\"{", "{")
+	str = strings.ReplaceAll(str, "}\"", "}")
+	str = "[" + str + "]"
+
+	// Объявляем карту с строчным ключём и значением в виде интерфейса
+	var teacher_maps []map[string]interface{}
+
+	// Записываем значения в карту
+	err = json.Unmarshal([]byte(str), &teacher_maps)
+	if err != nil {
+		return err
+	}
+
+	teachers_array := Teachers{}
+
+	// Итерируемся по карте
+	for _, teacher_map := range teacher_maps {
+
+		teacher := Teacher{}
+
+		// Проверяем наличие нужного ключа
+		if teacher_map["id"] != nil {
+			if val, ok := teacher_map["id"].(float64); ok {
+				teacher.Id = int(val)
+			} else {
+				return errors.New("couldn't convert 'id' to int")
+			}
+		} else {
+			return errors.New("teacher has no 'id'")
+		}
+
+		if teacher_map["name"] != nil {
+			if val, ok := teacher_map["name"].(string); ok {
+				teacher.Name = val
+			} else {
+				return errors.New("couldn't convert 'name' to string")
+			}
+		} else {
+			return errors.New("teacher has no 'name'")
+		}
+
+		if teacher_map["login"] != nil {
+			if val, ok := teacher_map["login"].(string); ok {
+				teacher.Login = val
+			} else {
+				return errors.New("couldn't convert 'login' to string")
+			}
+		} else {
+			return errors.New("teacher has no 'login'")
+		}
+
+		teachers_array = append(teachers_array, teacher)
+	}
+
+	*t = teachers_array
+
+	return nil
 }
 
 func UnmarshalTeacher(src interface{}) (Teacher, string, error) {
@@ -420,7 +770,7 @@ func (d *Days) scan_days(src []byte) (err error) {
 			if val, ok := day_map["date"].(string); ok {
 				day_date = val
 			} else {
-				return errors.New("couldn't convertcovert 'date' to string")
+				return errors.New("couldn't convert 'date' to string")
 			}
 		} else {
 			return errors.New("day has no 'date'")
