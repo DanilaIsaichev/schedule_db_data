@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"strings"
+	"unicode/utf8"
 )
 
 type Subject struct {
@@ -238,7 +239,7 @@ func UnmarshalClass(src interface{}) (Class, string, error) {
 
 			if class["character"] != nil {
 				if val, ok := class["character"].(string); ok {
-					if len(val) == 1 {
+					if utf8.RuneCountInString(val) == 1 {
 						c.Character = val
 					} else {
 						return Class{}, "", errors.New("wrong class character")
