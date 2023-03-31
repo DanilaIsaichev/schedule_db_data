@@ -69,6 +69,7 @@ func UnmarshalSubject(src interface{}) (Subject, string, error) {
 
 			if subject["description"] != nil {
 				if val, ok := subject["description"].(string); ok {
+					s.Description = new(string)
 					*(s.Description) = val
 				} else {
 					return Subject{}, "", errors.New("couldn't convert subject's description to string")
@@ -146,6 +147,7 @@ func UnmarshalRoom(src interface{}) (Room, string, error) {
 
 			if room["wing"] != nil {
 				if val, ok := room["wing"].(float64); ok {
+					r.Wing = new(int)
 					*(r.Wing) = int(val)
 				} else {
 					return Room{}, "", errors.New("couldn't convert room's wing to int")
@@ -154,6 +156,7 @@ func UnmarshalRoom(src interface{}) (Room, string, error) {
 
 			if room["floor"] != nil {
 				if val, ok := room["floor"].(float64); ok {
+					r.Floor = new(int)
 					*(r.Floor) = int(val)
 				} else {
 					return Room{}, "", errors.New("couldn't convert room's floor to string")
