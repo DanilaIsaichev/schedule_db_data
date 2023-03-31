@@ -69,8 +69,10 @@ func UnmarshalSubject(src interface{}) (Subject, string, error) {
 
 			if subject["description"] != nil {
 				if val, ok := subject["description"].(string); ok {
-					s.Description = new(string)
-					*(s.Description) = val
+					if len(val) > 0 {
+						s.Description = new(string)
+						*(s.Description) = val
+					}
 				} else {
 					return Subject{}, "", errors.New("couldn't convert subject's description to string")
 				}
