@@ -48,6 +48,8 @@ func UnmarshalSubject(src interface{}) (Subject, string, error) {
 		} else {
 			return Subject{}, "", errors.New("couldn't convert action to string")
 		}
+	} else {
+		return Subject{}, "", errors.New("no action found")
 	}
 
 	if subject_map["subject"] != nil {
@@ -123,6 +125,8 @@ func UnmarshalRoom(src interface{}) (Room, string, error) {
 		} else {
 			return Room{}, "", errors.New("couldn't convert action to string")
 		}
+	} else {
+		return Room{}, "", errors.New("no action found")
 	}
 
 	if room_map["room"] != nil {
@@ -204,6 +208,8 @@ func UnmarshalClass(src interface{}) (Class, string, error) {
 		} else {
 			return Class{}, "", errors.New("couldn't convert action to string")
 		}
+	} else {
+		return Class{}, "", errors.New("no action found")
 	}
 
 	if class_map["class"] != nil {
@@ -295,6 +301,8 @@ func UnmarshalTeacher(src interface{}) (Teacher, string, error) {
 		} else {
 			return Teacher{}, "", errors.New("couldn't convert action to string")
 		}
+	} else {
+		return Teacher{}, "", errors.New("no action found")
 	}
 
 	if teacher_map["teacher"] != nil {
