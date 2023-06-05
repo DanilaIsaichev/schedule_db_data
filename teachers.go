@@ -96,43 +96,50 @@ func (t *Teachers) scan_teachers(src []byte) (err error) {
 	return nil
 }
 
-func UnmarshalTeacher(src interface{}) (Teacher, error) {
+func UnmarshalTeacher(src interface{}) (Teachers, error) {
 
 	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
 	byte_str, err := scan_prepare(src)
 	if err != nil {
-		return Teacher{}, err
+		return Teachers{}, err
 	}
 
-	// Объявляем карту с строчным ключём и значением в виде интерфейса
-	var teacher map[string]interface{}
+	// Объявляем массив карт со строчным ключём и значением в виде интерфейса
+	var teacher_maps []map[string]interface{}
 
-	// Записываем значения в карту
-	err = json.Unmarshal(byte_str, &teacher)
+	// Записываем значения в массив карт
+	err = json.Unmarshal(byte_str, &teacher_maps)
 	if err != nil {
-		return Teacher{}, err
+		return Teachers{}, err
 	}
 
-	t := Teacher{}
+	t := Teachers{}
 
-	if teacher["name"] != nil {
-		if val, ok := teacher["name"].(string); ok {
-			t.Name = val
-		} else {
-			return Teacher{}, errors.New("couldn't convert teacher's name to string")
-		}
-	} else {
-		return Teacher{}, errors.New("no teacher's name found")
-	}
+	for _, teacher_map := range teacher_maps {
 
-	if teacher["login"] != nil {
-		if val, ok := teacher["login"].(string); ok {
-			t.Login = val
+		teacher := Teacher{}
+
+		if teacher_map["login"] != nil {
+			if val, ok := teacher_map["login"].(string); ok {
+				teacher.Login = val
+			} else {
+				return Teachers{}, errors.New("couldn't convert teacher's login to string")
+			}
 		} else {
-			return Teacher{}, errors.New("couldn't convert teacher's login to string")
+			return Teachers{}, errors.New("no teacher's login found")
 		}
-	} else {
-		return Teacher{}, errors.New("no teacher's login found")
+
+		if teacher_map["name"] != nil {
+			if val, ok := teacher_map["name"].(string); ok {
+				teacher.Name = val
+			} else {
+				return Teachers{}, errors.New("couldn't convert teacher's name to string")
+			}
+		} else {
+			return Teachers{}, errors.New("no teacher's name found")
+		}
+
+		t = append(t, teacher)
 	}
 
 	return t, nil
