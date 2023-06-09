@@ -7,7 +7,6 @@ import (
 )
 
 type Teacher struct {
-	Id    int    `json:"id"`
 	Name  string `json:"name"`
 	Login string `json:"login"`
 }
@@ -56,17 +55,6 @@ func (t *Teachers) scan_teachers(src []byte) (err error) {
 	for _, teacher_map := range teacher_maps {
 
 		teacher := Teacher{}
-
-		// Проверяем наличие нужного ключа
-		if teacher_map["id"] != nil {
-			if val, ok := teacher_map["id"].(float64); ok {
-				teacher.Id = int(val)
-			} else {
-				return errors.New("couldn't convert 'id' to int")
-			}
-		} else {
-			return errors.New("teacher has no 'id'")
-		}
 
 		if teacher_map["name"] != nil {
 			if val, ok := teacher_map["name"].(string); ok {
