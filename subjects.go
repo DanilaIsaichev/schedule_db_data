@@ -8,7 +8,7 @@ import (
 
 type Subject struct {
 	Name        string  `json:"name"`
-	Description *string `json:"description"`
+	Description string `json:"description"`
 }
 
 type Subjects []Subject
@@ -69,11 +69,12 @@ func (s *Subjects) scan_subjects(src []byte) (err error) {
 
 		if subject_map["description"] != nil {
 			if val, ok := subject_map["description"].(string); ok {
-				subject.Description = new(string)
-				*subject.Description = val
+				subject.Description = val
 			} else {
-				return errors.New("couldn't convert 'login' to string")
+				return errors.New("couldn't convert 'description' to string")
 			}
+		} else {
+			subject.Description = ""
 		}
 
 		subjects_array = append(subjects_array, subject)
@@ -120,12 +121,13 @@ func UnmarshalSubject(src interface{}) (Subjects, error) {
 		if subject_map["description"] != nil {
 			if val, ok := subject_map["description"].(string); ok {
 				if len(val) > 0 {
-					subject.Description = new(string)
-					*(subject.Description) = val
+					subject.Description = val
 				}
 			} else {
 				return Subjects{}, errors.New("couldn't convert subject's description to string")
 			}
+		} else {
+			subject.Description = ""
 		}
 
 		s = append(s, subject)
