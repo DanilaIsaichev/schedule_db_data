@@ -8,7 +8,7 @@ import (
 
 type Class struct {
 	Number    int    `json:"number"`
-	Character string `json:"сharacter"`
+	Character string `json:"character"`
 }
 
 type Classes []Class
