@@ -7,7 +7,6 @@ import (
 )
 
 type Room struct {
-	Id    int    `json:"id"`
 	Name  string `json:"name"`
 	Wing  int   `json:"wing"`
 	Floor int   `json:"floor"`
@@ -59,16 +58,6 @@ func (r *Rooms) scan_rooms(src []byte) (err error) {
 		room := Room{}
 
 		// Проверяем наличие нужного ключа
-		if room_map["id"] != nil {
-			if val, ok := room_map["id"].(float64); ok {
-				room.Id = int(val)
-			} else {
-				return errors.New("couldn't convert 'id' to int")
-			}
-		} else {
-			return errors.New("room has no 'id'")
-		}
-
 		if room_map["name"] != nil {
 			if val, ok := room_map["name"].(string); ok {
 				room.Name = val
