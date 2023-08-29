@@ -8,10 +8,10 @@ import (
 )
 
 type Request struct {
-	Is_base  bool       `json:"is_base"`
-	Start    *time.Time `json:"start"`
-	Year     int        `json:"year"`
-	Parallel int        `json:"parallel"`
+	Is_base  bool      `json:"is_base"`
+	Start    time.Time `json:"start"`
+	Year     int       `json:"year"`
+	Parallel int       `json:"parallel"`
 }
 
 type Response struct {
