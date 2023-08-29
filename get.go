@@ -384,7 +384,7 @@ func Get_editor_data(req Request) (Response, error) {
 	}
 
 	// Проверка существования классов, учителей, кабинетов и предметов
-	for day_id, day := range days {
+	for _, day := range days {
 		for schedule_id, schedule := range day.Schedule {
 
 			// Ищем класс в данных из БД по номеру и букве
@@ -401,16 +401,14 @@ func Get_editor_data(req Request) (Response, error) {
 					// Проверяем наличие предмета, кабинета и учителя в данных из БД
 					if subjects.Contain(Subject{Name: lesson.Name}) && rooms.Contain(Room{Name: lesson.Room}) && teachers.Contain(lesson.Teacher) {
 						// Передаём учителю данные из БД
-						days[day_id].Schedule[schedule_id].Lessons[lesson_id].Teacher, err = teachers.Find(lesson.Teacher.Login)
-						fmt.Println(1)
-						fmt.Println(days[day_id].Schedule[schedule_id].Lessons[lesson_id].Teacher)
+						lesson.Teacher, err = teachers.Find(lesson.Teacher.Login)
 						if err != nil {
 							// Отбрасываем урок, если в БД нет данных об учителе
+							fmt.Println(append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...))
 							schedule.Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
 						}
 					} else {
 						// Отбрасываем урок, если в БД нет данных о предмете или кабинете, или учителе
-						fmt.Println("!!!")
 						schedule.Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
 					}
 				}
@@ -418,9 +416,6 @@ func Get_editor_data(req Request) (Response, error) {
 		}
 	}
 
-	fmt.Println(2)
-	fmt.Println(days[0].Schedule[0].Lessons[0].Teacher.Login)
-	fmt.Println(days[0].Schedule[0].Lessons[0].Teacher.Name)
 	return Response{Teachers: teachers, Classes: classes, Rooms: rooms, Subjects: subjects, Days: days}, nil
 }
 
