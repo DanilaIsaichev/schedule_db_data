@@ -3,6 +3,8 @@ package schedule_db_data
 import (
 	"database/sql"
 	"os"
+
+	_ "github.com/lib/pq"
 )
 
 func Get_db_env(user_type string) (hostname string, name string, port string, user string, password string) {
