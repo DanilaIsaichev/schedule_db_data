@@ -409,8 +409,7 @@ func Get_editor_data(req Request) (Response, error) {
 						}
 					} else {
 						// Отбрасываем урок, если в БД нет данных о предмете или кабинете, или учителе
-						/*days[day_id].Schedule[schedule_id].Lessons*/
-						schedule.Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
+						days[day_id].Schedule[schedule_id].Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
 					}
 				}
 			}
