@@ -122,86 +122,62 @@ func (c *Classes) scan_classes(src []byte) (err error) {
 	return nil
 }
 
-func UnmarshalClass(src interface{}) (Class, string, error) {
+func UnmarshalClasses(src interface{}) (Classes, error) {
 
 	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
 	byte_str, err := scan_prepare(src)
 	if err != nil {
-		return Class{}, "", err
+		return Classes{}, err
 	}
 
 	// Объявляем карту с строчным ключём и значением в виде интерфейса
-	var class_map map[string]interface{}
+	var classes_map []map[string]interface{}
 
 	fmt.Println(byte_str)
 
 	// Записываем значения в карту
-	err = json.Unmarshal(byte_str, &class_map)
+	err = json.Unmarshal(byte_str, &classes_map)
 	if err != nil {
-		return Class{}, "", err
+		return Classes{}, err
 	}
 
-	c := Class{}
-	a := ""
+	classes := Classes{}
 
-	if class_map["action"] != nil {
-		if val, ok := class_map["action"].(string); ok {
-			switch {
-			case val == "save":
-				a = "save"
-			case val == "delete":
-				a = "delete"
-			default:
-				return Class{}, "", errors.New("unknown action")
-			}
-		} else {
-			return Class{}, "", errors.New("couldn't convert action to string")
-		}
-	} else {
-		return Class{}, "", errors.New("no action found")
-	}
+	for _, class_map := range classes_map {
 
-	if class_map["class"] != nil {
-		if val, ok := class_map["class"].(map[string]interface{}); ok {
+		class := Class{}
 
-			class := val
-
-			if class["number"] != nil {
-				if val, ok := class["number"].(float64); ok {
-					if int(val) >= 1 && int(val) <= 11 {
-						c.Number = int(val)
-					} else {
-						return Class{}, "", errors.New("wrong class number")
-					}
+		if class_map["number"] != nil {
+			if val, ok := class_map["number"].(float64); ok {
+				if int(val) >= 1 && int(val) <= 11 {
+					class.Number = int(val)
 				} else {
-					return Class{}, "", errors.New("couldn't convert class' number to int")
+					return Classes{}, errors.New("wrong class number")
 				}
 			} else {
-				return Class{}, "", errors.New("no class' number found")
+				return Classes{}, errors.New("couldn't convert class' number to int")
 			}
+		} else {
+			return Classes{}, errors.New("no class' number found")
+		}
 
-			if class["character"] != nil {
-				if val, ok := class["character"].(string); ok {
-					if len([]rune(val)) == 1 {
-						c.Character = val
-					} else {
-						return Class{}, "", errors.New("wrong class character")
-					}
+		if class_map["character"] != nil {
+			if val, ok := class_map["character"].(string); ok {
+				if len([]rune(val)) == 1 {
+					class.Character = val
 				} else {
-					return Class{}, "", errors.New("couldn't convert class character to string")
+					return Classes{}, errors.New("wrong class character")
 				}
 			} else {
-				return Class{}, "", errors.New("no class character found")
+				return Classes{}, errors.New("couldn't convert class character to string")
 			}
-
 		} else {
-			return Class{}, "", errors.New("couldn't convert class' struct to map[string]interface{}")
+			return Classes{}, errors.New("no class character found")
 		}
-	} else {
-		return Class{}, "", errors.New("no 'class' found")
+		classes = append(classes, class)
 	}
 
-	return c, a, nil
+	return classes, nil
 }
 
 func (classes *Classes) Contain(class Class) (res bool) {
