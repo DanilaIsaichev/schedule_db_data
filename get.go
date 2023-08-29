@@ -412,6 +412,7 @@ func Get_editor_data(req Request) (Response, error) {
 							days[day_id].Schedule[schedule_id].Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
 						}
 					} else {
+						fmt.Println(5)
 						// Отбрасываем урок, если в БД нет данных о предмете или кабинете, или учителе
 						fmt.Println(append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...))
 						fmt.Println(schedule.Lessons[lesson_id])
