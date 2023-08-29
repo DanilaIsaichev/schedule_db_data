@@ -406,6 +406,10 @@ func Get_editor_data(req Request) (Response, error) {
 
 					fmt.Println(fmt.Sprint("lesson ", lesson))
 					// Проверяем наличие предмета, кабинета и учителя в данных из БД
+
+					fmt.Println(fmt.Sprint("contain ", subjects.Contain(Subject{Name: lesson.Name}), lesson.Name))
+					fmt.Println(fmt.Sprint("contain ", rooms.Contain(Room{Name: lesson.Room}), lesson.Room))
+					fmt.Println(fmt.Sprint("contain ", teachers.Contain(lesson.Teacher), lesson.Teacher))
 					if subjects.Contain(Subject{Name: lesson.Name}) && rooms.Contain(Room{Name: lesson.Room}) && teachers.Contain(lesson.Teacher) {
 						// Передаём учителю данные из БД
 						days[day_id].Schedule[schedule_id].Lessons[lesson_id].Teacher, err = teachers.Find(lesson.Teacher.Login)
