@@ -402,6 +402,8 @@ func Get_editor_data(req Request) (Response, error) {
 					if subjects.Contain(Subject{Name: lesson.Name}) && rooms.Contain(Room{Name: lesson.Room}) && teachers.Contain(lesson.Teacher) {
 						// Передаём учителю данные из БД
 						days[day_id].Schedule[schedule_id].Lessons[lesson_id].Teacher, err = teachers.Find(lesson.Teacher.Login)
+						fmt.Println(1)
+						fmt.Println(days[day_id].Schedule[schedule_id].Lessons[lesson_id].Teacher)
 						if err != nil {
 							// Отбрасываем урок, если в БД нет данных об учителе
 							schedule.Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
@@ -415,6 +417,7 @@ func Get_editor_data(req Request) (Response, error) {
 		}
 	}
 
+	fmt.Println(2)
 	fmt.Println(days)
 
 	return Response{Teachers: teachers, Classes: classes, Rooms: rooms, Subjects: subjects, Days: days}, nil

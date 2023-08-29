@@ -3,6 +3,7 @@ package schedule_db_data
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -148,6 +149,9 @@ func (teachers *Teachers) Find(login string) (teacher Teacher, err error) {
 
 	for _, teacher := range *teachers {
 		if teacher.Login == login {
+			fmt.Println(0)
+			fmt.Println(teacher.Login)
+			fmt.Println(login)
 			return teacher, nil
 		}
 	}
