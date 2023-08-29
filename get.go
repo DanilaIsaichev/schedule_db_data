@@ -415,6 +415,8 @@ func Get_editor_data(req Request) (Response, error) {
 		}
 	}
 
+	fmt.Println(days)
+
 	return Response{Teachers: teachers, Classes: classes, Rooms: rooms, Subjects: subjects, Days: days}, nil
 }
 
