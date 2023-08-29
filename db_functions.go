@@ -2,7 +2,6 @@ package schedule_db_data
 
 import (
 	"database/sql"
-	"fmt"
 	"os"
 
 	_ "github.com/lib/pq"
@@ -34,7 +33,7 @@ func Get_db_env(user_type string) (hostname string, name string, port string, us
 			user_name = "setter"
 		}
 
-		user_password := os.Getenv("DB_SETTER_PASSWORD")
+		user_password = os.Getenv("DB_SETTER_PASSWORD")
 		if user_password == "" {
 			user_password = "123456"
 		}
@@ -45,7 +44,7 @@ func Get_db_env(user_type string) (hostname string, name string, port string, us
 			user_name = "getter"
 		}
 
-		user_password := os.Getenv("DB_GETTER_PASSWORD")
+		user_password = os.Getenv("DB_GETTER_PASSWORD")
 		if user_password == "" {
 			user_password = "123456"
 		}
@@ -59,7 +58,6 @@ func DB_connection(hostname string, db_name string, username string, password st
 
 	connection_string := "host=" + hostname + " port=" + port + " user=" + username + " password=" + password + " dbname=" + db_name + " sslmode=disable"
 
-	fmt.Println(connection_string)
 	db, err := sql.Open("postgres", connection_string)
 	if err != nil {
 		return db, err
