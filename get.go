@@ -272,14 +272,9 @@ func Get_base_schedule(year int, parallel int) (Days, error) {
 	days := Days{}
 
 	err = db.QueryRow("SELECT data FROM schedule WHERE is_base = True AND year = " + fmt.Sprint(year) + " AND parallel = " + fmt.Sprint(parallel) + ";").Scan(&days)
-	switch {
-	case err == sql.ErrNoRows:
-		return Days{}, errors.New(fmt.Sprint("no schedules for year ", year))
-	case err != nil:
+	if err != nil {
 		return Days{}, err
-
-	default:
-
+	} else {
 		// Проверка существования классов, учителей, кабинетов и предметов
 		classes, err := Get_classes()
 		if err != nil {
