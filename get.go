@@ -65,7 +65,7 @@ func Get_teachers() (Teachers, error) {
 
 		teacher := Teacher{}
 
-		err := result.Scan(&teacher.Name, &teacher.Login)
+		err := result.Scan(&teacher.Login, &teacher.Name)
 		if err != nil {
 			return Teachers{}, err
 		}
