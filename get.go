@@ -410,6 +410,7 @@ func Get_editor_data(req Request) (Response, error) {
 						}
 					} else {
 						// Отбрасываем урок, если в БД нет данных о предмете или кабинете, или учителе
+						fmt.Println("!!!")
 						schedule.Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
 					}
 				}
@@ -418,8 +419,8 @@ func Get_editor_data(req Request) (Response, error) {
 	}
 
 	fmt.Println(2)
-	fmt.Println(days)
-
+	fmt.Println(days[0].Schedule[0].Lessons[0].Teacher.Login)
+	fmt.Println(days[0].Schedule[0].Lessons[0].Teacher.Name)
 	return Response{Teachers: teachers, Classes: classes, Rooms: rooms, Subjects: subjects, Days: days}, nil
 }
 
