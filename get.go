@@ -393,13 +393,15 @@ func Get_editor_data(req Request) (Response, error) {
 			found_class, err := classes.Find(schedule.Class)
 			if err != nil {
 				// Отбрасываем расписание для несуществующего класса
+				fmt.Println(fmt.Sprint("schedule_id ", schedule_id))
 				day.Schedule = append(day.Schedule[:schedule_id], day.Schedule[schedule_id+1:]...)
 			} else {
 
 				schedule.Class = found_class.ToString()
-
+				fmt.Println(fmt.Sprint("schedule.Class ", schedule.Class))
 				for lesson_id, lesson := range schedule.Lessons {
 
+					fmt.Println(fmt.Sprint("lesson ", lesson))
 					// Проверяем наличие предмета, кабинета и учителя в данных из БД
 					if subjects.Contain(Subject{Name: lesson.Name}) && rooms.Contain(Room{Name: lesson.Room}) && teachers.Contain(lesson.Teacher) {
 						// Передаём учителю данные из БД
@@ -418,6 +420,7 @@ func Get_editor_data(req Request) (Response, error) {
 						fmt.Println(schedule.Lessons[lesson_id])
 						days[day_id].Schedule[schedule_id].Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
 					}
+					fmt.Println(fmt.Sprint("lesson 2 ", lesson))
 				}
 			}
 		}
