@@ -19,7 +19,7 @@ func (c *Class) ToString() (class string) {
 
 func (c *Class) Parse(class_string string) (class Class, err error) {
 
-	c.Number, err = strconv.Atoi(class_string[:len(class_string)-1])
+	c.Number, err = strconv.Atoi(class_string[:len(class_string)-2])
 	if err != nil {
 		return Class{}, err
 	}
