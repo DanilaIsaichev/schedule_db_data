@@ -133,6 +133,8 @@ func UnmarshalClass(src interface{}) (Class, string, error) {
 	// Объявляем карту с строчным ключём и значением в виде интерфейса
 	var class_map map[string]interface{}
 
+	fmt.Println(byte_str)
+
 	// Записываем значения в карту
 	err = json.Unmarshal(byte_str, &class_map)
 	if err != nil {
