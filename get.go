@@ -370,7 +370,7 @@ func Get_editor_data(req Request) (Response, error) {
 			return Response{}, err
 		}
 	} else {
-		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = " + req.Start.Format("2006-01-02") + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
+		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = '" + req.Start.Format("2006-01-02") + "' AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
 		if err == sql.ErrNoRows {
 			err = db.QueryRow("SELECT data FROM schedule WHERE is_base = True AND year = " + fmt.Sprint(req.Year) + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
 			if err == sql.ErrNoRows {
@@ -468,7 +468,7 @@ func Get_generator_data(req Request) (Generator_response, error) {
 			return Generator_response{}, err
 		}
 	} else {
-		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = " + req.Start.Format("2006-01-02") + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
+		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = '" + req.Start.Format("2006-01-02") + "' AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
 		if err == sql.ErrNoRows {
 			err = db.QueryRow("SELECT data FROM schedule WHERE is_base = True AND year = " + fmt.Sprint(req.Year) + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
 			if err != nil {
