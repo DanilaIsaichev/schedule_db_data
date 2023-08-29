@@ -24,7 +24,7 @@ func (c *Class) Parse(class_string string) (class Class, err error) {
 		return Class{}, err
 	}
 
-	c.Character = class_string[len(class_string)-1:]
+	c.Character = class_string[len(class_string)-2:]
 
 	return *c, nil
 }
