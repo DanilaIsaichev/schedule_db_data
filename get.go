@@ -391,9 +391,12 @@ func Get_editor_data(req Request) (Response, error) {
 
 			// Ищем класс в данных из БД по номеру и букве
 			found_class, err := classes.Find(schedule.Class)
+			fmt.Println(fmt.Sprint("schedule.Class ", schedule.Class))
+			fmt.Println(fmt.Sprint("found_class ", found_class))
 			if err != nil {
 				// Отбрасываем расписание для несуществующего класса
 				fmt.Println(fmt.Sprint("schedule_id ", schedule_id))
+				fmt.Println(err)
 				day.Schedule = append(day.Schedule[:schedule_id], day.Schedule[schedule_id+1:]...)
 			} else {
 
