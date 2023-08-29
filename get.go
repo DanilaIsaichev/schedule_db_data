@@ -373,7 +373,9 @@ func Get_editor_data(req Request) (Response, error) {
 		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = " + req.Start.Format("2006-01-02") + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
 		if err == sql.ErrNoRows {
 			err = db.QueryRow("SELECT data FROM schedule WHERE is_base = True AND year = " + fmt.Sprint(req.Year) + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
-			if err != nil {
+			if err == sql.ErrNoRows {
+				return Response{Teachers: teachers, Classes: classes, Rooms: rooms, Subjects: subjects, Days: Days{}}, err
+			} else if err != nil {
 				return Response{}, err
 			}
 		} else if err != nil {
