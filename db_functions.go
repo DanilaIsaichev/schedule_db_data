@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func get_db_env(user_type string) (hostname string, name string, port string, user string, password string) {
+func Get_db_env(user_type string) (hostname string, name string, port string, user string, password string) {
 
 	db_hostname := os.Getenv("DB_HOSTNAME")
 	if db_hostname == "" {
