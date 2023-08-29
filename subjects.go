@@ -7,9 +7,8 @@ import (
 )
 
 type Subject struct {
-	Id          int     `json:"id"`
-	Name        string  `json:"name"`
-	Description *string `json:"description"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type Subjects []Subject
@@ -58,16 +57,6 @@ func (s *Subjects) scan_subjects(src []byte) (err error) {
 		subject := Subject{}
 
 		// Проверяем наличие нужного ключа
-		if subject_map["id"] != nil {
-			if val, ok := subject_map["id"].(float64); ok {
-				subject.Id = int(val)
-			} else {
-				return errors.New("couldn't convert 'id' to int")
-			}
-		} else {
-			return errors.New("subject has no 'id'")
-		}
-
 		if subject_map["name"] != nil {
 			if val, ok := subject_map["name"].(string); ok {
 				subject.Name = val
@@ -80,11 +69,12 @@ func (s *Subjects) scan_subjects(src []byte) (err error) {
 
 		if subject_map["description"] != nil {
 			if val, ok := subject_map["description"].(string); ok {
-				subject.Description = new(string)
-				*subject.Description = val
+				subject.Description = val
 			} else {
-				return errors.New("couldn't convert 'login' to string")
+				return errors.New("couldn't convert 'description' to string")
 			}
+		} else {
+			subject.Description = ""
 		}
 
 		subjects_array = append(subjects_array, subject)
@@ -95,77 +85,55 @@ func (s *Subjects) scan_subjects(src []byte) (err error) {
 	return nil
 }
 
-func UnmarshalSubject(src interface{}) (Subject, string, error) {
+func UnmarshalSubject(src interface{}) (Subjects, error) {
 
 	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
 	byte_str, err := scan_prepare(src)
 	if err != nil {
-		return Subject{}, "", err
+		return Subjects{}, err
 	}
 
 	// Объявляем карту с строчным ключём и значением в виде интерфейса
-	var subject_map map[string]interface{}
+	var subject_maps []map[string]interface{}
 
 	// Записываем значения в карту
-	err = json.Unmarshal(byte_str, &subject_map)
+	err = json.Unmarshal(byte_str, &subject_maps)
 	if err != nil {
-		return Subject{}, "", err
+		return Subjects{}, err
 	}
 
-	s := Subject{}
-	a := ""
+	s := Subjects{}
 
-	if subject_map["action"] != nil {
-		if val, ok := subject_map["action"].(string); ok {
-			switch {
-			case val == "save":
-				a = "save"
-			case val == "delete":
-				a = "delete"
-			default:
-				return Subject{}, "", errors.New("unknown action")
+	for _, subject_map := range subject_maps {
+
+		subject := Subject{}
+
+		if subject_map["name"] != nil {
+			if val, ok := subject_map["name"].(string); ok {
+				subject.Name = val
+			} else {
+				return Subjects{}, errors.New("couldn't convert subject's name to string")
 			}
 		} else {
-			return Subject{}, "", errors.New("couldn't convert action to string")
+			return Subjects{}, errors.New("no subject's name found")
 		}
-	} else {
-		return Subject{}, "", errors.New("no action found")
-	}
 
-	if subject_map["subject"] != nil {
-		if val, ok := subject_map["subject"].(map[string]interface{}); ok {
-
-			subject := val
-
-			if subject["name"] != nil {
-				if val, ok := subject["name"].(string); ok {
-					s.Name = val
-				} else {
-					return Subject{}, "", errors.New("couldn't convert subject's name to string")
+		if subject_map["description"] != nil {
+			if val, ok := subject_map["description"].(string); ok {
+				if len(val) > 0 {
+					subject.Description = val
 				}
 			} else {
-				return Subject{}, "", errors.New("no subject's name found")
+				return Subjects{}, errors.New("couldn't convert subject's description to string")
 			}
-
-			if subject["description"] != nil {
-				if val, ok := subject["description"].(string); ok {
-					if len(val) > 0 {
-						s.Description = new(string)
-						*(s.Description) = val
-					}
-				} else {
-					return Subject{}, "", errors.New("couldn't convert subject's description to string")
-				}
-			}
-
 		} else {
-			return Subject{}, "", errors.New("couldn't convert subject's struct to map[string]interface{}")
+			subject.Description = ""
 		}
-	} else {
-		return Subject{}, "", errors.New("no 'subject' found")
+
+		s = append(s, subject)
 	}
 
-	return s, a, nil
+	return s, nil
 }
 
 func (subjects *Subjects) Contain(subject Subject) (res bool) {

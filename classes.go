@@ -9,9 +9,8 @@ import (
 )
 
 type Class struct {
-	Id        int    `json:"id"`
 	Number    int    `json:"number"`
-	Character string `json:"сharacter"`
+	Character string `json:"character"`
 }
 
 func (c *Class) ToString() (class string) {
@@ -75,17 +74,6 @@ func (c *Classes) scan_classes(src []byte) (err error) {
 
 		class := Class{}
 
-		// Проверяем наличие нужного ключа
-		if class_map["id"] != nil {
-			if val, ok := class_map["id"].(float64); ok {
-				class.Id = int(val)
-			} else {
-				return errors.New("couldn't convert 'id' to int")
-			}
-		} else {
-			return errors.New("class has no 'id'")
-		}
-
 		if class_map["number"] != nil {
 			if val, ok := class_map["number"].(float64); ok {
 				if int(val) >= 1 && int(val) <= 11 {
@@ -122,7 +110,7 @@ func (c *Classes) scan_classes(src []byte) (err error) {
 	return nil
 }
 
-func UnmarshalClasses(src interface{}) (Classes, error) {
+func UnmarshalClass(src interface{}) (Classes, error) {
 
 	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
 	byte_str, err := scan_prepare(src)
@@ -131,19 +119,17 @@ func UnmarshalClasses(src interface{}) (Classes, error) {
 	}
 
 	// Объявляем карту с строчным ключём и значением в виде интерфейса
-	var classes_map []map[string]interface{}
-
-	fmt.Println(byte_str)
+	var class_maps []map[string]interface{}
 
 	// Записываем значения в карту
-	err = json.Unmarshal(byte_str, &classes_map)
+	err = json.Unmarshal(byte_str, &class_maps)
 	if err != nil {
 		return Classes{}, err
 	}
 
-	classes := Classes{}
+	c := Classes{}
 
-	for _, class_map := range classes_map {
+	for _, class_map := range class_maps {
 
 		class := Class{}
 
@@ -174,10 +160,12 @@ func UnmarshalClasses(src interface{}) (Classes, error) {
 		} else {
 			return Classes{}, errors.New("no class character found")
 		}
-		classes = append(classes, class)
+
+		c = append(c, class)
+
 	}
 
-	return classes, nil
+	return c, nil
 }
 
 func (classes *Classes) Contain(class Class) (res bool) {

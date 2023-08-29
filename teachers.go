@@ -7,7 +7,6 @@ import (
 )
 
 type Teacher struct {
-	Id    int    `json:"id"`
 	Name  string `json:"name"`
 	Login string `json:"login"`
 }
@@ -57,17 +56,6 @@ func (t *Teachers) scan_teachers(src []byte) (err error) {
 
 		teacher := Teacher{}
 
-		// Проверяем наличие нужного ключа
-		if teacher_map["id"] != nil {
-			if val, ok := teacher_map["id"].(float64); ok {
-				teacher.Id = int(val)
-			} else {
-				return errors.New("couldn't convert 'id' to int")
-			}
-		} else {
-			return errors.New("teacher has no 'id'")
-		}
-
 		if teacher_map["name"] != nil {
 			if val, ok := teacher_map["name"].(string); ok {
 				teacher.Name = val
@@ -96,76 +84,53 @@ func (t *Teachers) scan_teachers(src []byte) (err error) {
 	return nil
 }
 
-func UnmarshalTeacher(src interface{}) (Teacher, string, error) {
+func UnmarshalTeacher(src interface{}) (Teachers, error) {
 
 	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
 	byte_str, err := scan_prepare(src)
 	if err != nil {
-		return Teacher{}, "", err
+		return Teachers{}, err
 	}
 
-	// Объявляем карту с строчным ключём и значением в виде интерфейса
-	var teacher_map map[string]interface{}
+	// Объявляем массив карт со строчным ключём и значением в виде интерфейса
+	var teacher_maps []map[string]interface{}
 
-	// Записываем значения в карту
-	err = json.Unmarshal(byte_str, &teacher_map)
+	// Записываем значения в массив карт
+	err = json.Unmarshal(byte_str, &teacher_maps)
 	if err != nil {
-		return Teacher{}, "", err
+		return Teachers{}, err
 	}
 
-	t := Teacher{}
-	a := ""
+	t := Teachers{}
 
-	if teacher_map["action"] != nil {
-		if val, ok := teacher_map["action"].(string); ok {
-			switch {
-			case val == "save":
-				a = "save"
-			case val == "delete":
-				a = "delete"
-			default:
-				return Teacher{}, "", errors.New("unknown action")
+	for _, teacher_map := range teacher_maps {
+
+		teacher := Teacher{}
+
+		if teacher_map["login"] != nil {
+			if val, ok := teacher_map["login"].(string); ok {
+				teacher.Login = val
+			} else {
+				return Teachers{}, errors.New("couldn't convert teacher's login to string")
 			}
 		} else {
-			return Teacher{}, "", errors.New("couldn't convert action to string")
+			return Teachers{}, errors.New("no teacher's login found")
 		}
-	} else {
-		return Teacher{}, "", errors.New("no action found")
-	}
 
-	if teacher_map["teacher"] != nil {
-		if val, ok := teacher_map["teacher"].(map[string]interface{}); ok {
-
-			teacher := val
-
-			if teacher["name"] != nil {
-				if val, ok := teacher["name"].(string); ok {
-					t.Name = val
-				} else {
-					return Teacher{}, "", errors.New("couldn't convert teacher's name to string")
-				}
+		if teacher_map["name"] != nil {
+			if val, ok := teacher_map["name"].(string); ok {
+				teacher.Name = val
 			} else {
-				return Teacher{}, "", errors.New("no teacher's name found")
+				return Teachers{}, errors.New("couldn't convert teacher's name to string")
 			}
-
-			if teacher["login"] != nil {
-				if val, ok := teacher["login"].(string); ok {
-					t.Login = val
-				} else {
-					return Teacher{}, "", errors.New("couldn't convert teacher's login to string")
-				}
-			} else {
-				return Teacher{}, "", errors.New("no teacher's login found")
-			}
-
 		} else {
-			return Teacher{}, "", errors.New("couldn't convertteacher's struct to map[string]interface{}")
+			return Teachers{}, errors.New("no teacher's name found")
 		}
-	} else {
-		return Teacher{}, "", errors.New("no 'teacher' found")
+
+		t = append(t, teacher)
 	}
 
-	return t, a, nil
+	return t, nil
 }
 
 func (teachers *Teachers) Contain(teacher Teacher) (res bool) {
