@@ -2,6 +2,7 @@ package schedule_db_data
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 
 	_ "github.com/lib/pq"
@@ -58,6 +59,7 @@ func DB_connection(hostname string, db_name string, username string, password st
 
 	connection_string := "host=" + hostname + " port=" + port + " user=" + username + " password=" + password + " dbname=" + db_name + " sslmode=disable"
 
+	fmt.Println(connection_string)
 	db, err := sql.Open("postgres", connection_string)
 	if err != nil {
 		return db, err
