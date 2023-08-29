@@ -7,6 +7,44 @@ import (
 	"time"
 )
 
+type Request struct {
+	Is_base  bool       `json:"is_base"`
+	Start    *time.Time `json:"start"`
+	Year     int        `json:"year"`
+	Parallel int        `json:"parallel"`
+}
+
+type Response struct {
+	Classes  Classes  `json:"classes"`
+	Teachers Teachers `json:"teachers"`
+	Rooms    Rooms    `json:"rooms"`
+	Subjects Subjects `json:"subjects"`
+	Days     Days     `json:"days"`
+}
+
+type Generator_response struct {
+	Classes  map[string]Class_lessons   `json:"classes"`
+	Teachers map[string]Teacher_lessons `json:"teachers"`
+}
+
+type Class_lesson struct {
+	Time    time.Time `json:"time"`
+	Name    string    `json:"name"`
+	Room    Room      `json:"room"`
+	Teacher Teacher   `json:"teacher"`
+}
+
+type Class_lessons []Class_lesson
+
+type Teacher_lesson struct {
+	Time  time.Time `json:"time"`
+	Name  string    `json:"name"`
+	Room  Room      `json:"room"`
+	Class Class     `json:"class"`
+}
+
+type Teacher_lessons []Teacher_lesson
+
 func Get_teachers() (Teachers, error) {
 
 	db, err := DB_connection(get_db_env())
@@ -135,8 +173,6 @@ func Get_changed_schedule(start time.Time, parallel int) (Days, error) {
 
 	// ищем среди изменений
 
-	start_str := start.Format("02.01.2006")
-
 	// Подключаемся к БД
 	db, err := DB_connection(get_db_env())
 	if err != nil {
@@ -147,7 +183,7 @@ func Get_changed_schedule(start time.Time, parallel int) (Days, error) {
 	days := Days{}
 
 	// Запрашиваем расписание по дате
-	err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = " + start_str + " AND parallel = " + fmt.Sprint(parallel) + ";").Scan(&days)
+	err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = " + start.Format("02.01.2006") + " AND parallel = " + fmt.Sprint(parallel) + ";").Scan(&days)
 	switch {
 	case err == sql.ErrNoRows:
 
@@ -192,14 +228,8 @@ func Get_changed_schedule(start time.Time, parallel int) (Days, error) {
 		for _, day := range days {
 			for schedule_id, schedule := range day.Schedule {
 
-				// Получаем класс из строки
-				class, err := new(Class).Parse(schedule.Class)
-				if err != nil {
-					return Days{}, err
-				}
-
 				// Ищем класс в данных из БД по номеру и букве
-				found_class, err := classes.Find(class.Number, class.Character)
+				found_class, err := classes.Find(schedule.Class)
 				if err != nil {
 					// Отбрасываем расписание для несуществующего класса
 					day.Schedule = append(day.Schedule[:schedule_id], day.Schedule[schedule_id+1:]...)
@@ -274,14 +304,8 @@ func Get_base_schedule(year int, parallel int) (Days, error) {
 		for _, day := range days {
 			for schedule_id, schedule := range day.Schedule {
 
-				// Получаем класс из строки
-				class, err := new(Class).Parse(schedule.Class)
-				if err != nil {
-					return Days{}, err
-				}
-
 				// Ищем класс в данных из БД по номеру и букве
-				found_class, err := classes.Find(class.Number, class.Character)
+				found_class, err := classes.Find(schedule.Class)
 				if err != nil {
 					// Отбрасываем расписание для несуществующего класса
 					day.Schedule = append(day.Schedule[:schedule_id], day.Schedule[schedule_id+1:]...)
@@ -311,4 +335,228 @@ func Get_base_schedule(year int, parallel int) (Days, error) {
 		return days, nil
 
 	}
+}
+
+// Универсальная функция для получения структуры ответа по структуре запроса
+func Get_editor_data(req Request) (Response, error) {
+
+	classes, err := Get_classes()
+	if err != nil {
+		return Response{}, err
+	}
+
+	teachers, err := Get_teachers()
+	if err != nil {
+		return Response{}, err
+	}
+
+	rooms, err := Get_rooms()
+	if err != nil {
+		return Response{}, err
+	}
+
+	subjects, err := Get_subjects()
+	if err != nil {
+		return Response{}, err
+	}
+
+	// Подключаемся к БД
+	db, err := DB_connection(get_db_env())
+	if err != nil {
+		return Response{}, err
+	}
+	defer db.Close()
+
+	days := Days{}
+
+	if req.Is_base {
+		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = True AND year = " + fmt.Sprint(req.Year) + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
+		if err != nil {
+			return Response{}, err
+		}
+	} else {
+		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = " + req.Start.Format("02.01.2006") + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
+		if err == sql.ErrNoRows {
+			err = db.QueryRow("SELECT data FROM schedule WHERE is_base = True AND year = " + fmt.Sprint(req.Year) + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
+			if err != nil {
+				return Response{}, err
+			}
+		} else if err != nil {
+			return Response{}, err
+		}
+	}
+
+	// Проверка существования классов, учителей, кабинетов и предметов
+	for _, day := range days {
+		for schedule_id, schedule := range day.Schedule {
+
+			// Ищем класс в данных из БД по номеру и букве
+			found_class, err := classes.Find(schedule.Class)
+			if err != nil {
+				// Отбрасываем расписание для несуществующего класса
+				day.Schedule = append(day.Schedule[:schedule_id], day.Schedule[schedule_id+1:]...)
+			} else {
+
+				schedule.Class = found_class.ToString()
+
+				for lesson_id, lesson := range schedule.Lessons {
+
+					// Проверяем наличие предмета, кабинета и учителя в данных из БД
+					if subjects.Contain(Subject{Name: lesson.Name}) && rooms.Contain(Room{Name: lesson.Room}) && teachers.Contain(lesson.Teacher) {
+						// Передаём учителю данные из БД
+						lesson.Teacher, err = teachers.Find(lesson.Teacher.Login)
+						if err != nil {
+							// Отбрасываем урок, если в БД нет данных об учителе
+							schedule.Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
+						}
+					} else {
+						// Отбрасываем урок, если в БД нет данных о предмете или кабинете, или учителе
+						schedule.Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
+					}
+				}
+			}
+		}
+	}
+
+	return Response{Teachers: teachers, Classes: classes, Rooms: rooms, Subjects: subjects, Days: days}, nil
+}
+
+// Универсальная функция для получения структуры ответа по структуре запроса
+func Get_generator_data(req Request) (Generator_response, error) {
+
+	classes, err := Get_classes()
+	if err != nil {
+		return Generator_response{}, err
+	}
+
+	classes_schedules := make(map[string]Class_lessons)
+
+	for _, class := range classes {
+		classes_schedules[class.ToString()] = Class_lessons{}
+	}
+
+	teachers, err := Get_teachers()
+	if err != nil {
+		return Generator_response{}, err
+	}
+
+	teachers_schedules := make(map[string]Teacher_lessons)
+
+	for _, teacher := range teachers {
+		teachers_schedules[teacher.Login] = Teacher_lessons{}
+	}
+
+	rooms, err := Get_rooms()
+	if err != nil {
+		return Generator_response{}, err
+	}
+
+	subjects, err := Get_subjects()
+	if err != nil {
+		return Generator_response{}, err
+	}
+
+	// Подключаемся к БД
+	db, err := DB_connection(get_db_env())
+	if err != nil {
+		return Generator_response{}, err
+	}
+	defer db.Close()
+
+	days := Days{}
+
+	if req.Is_base {
+		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = True AND year = " + fmt.Sprint(req.Year) + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
+		if err != nil {
+			return Generator_response{}, err
+		}
+	} else {
+		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = " + req.Start.Format("02.01.2006") + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
+		if err == sql.ErrNoRows {
+			err = db.QueryRow("SELECT data FROM schedule WHERE is_base = True AND year = " + fmt.Sprint(req.Year) + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
+			if err != nil {
+				return Generator_response{}, err
+			}
+		} else if err != nil {
+			return Generator_response{}, err
+		}
+	}
+
+	// Проверка существования классов, учителей, кабинетов и предметов
+	for _, day := range days {
+		for schedule_id, schedule := range day.Schedule {
+
+			// Ищем класс в данных из БД по номеру и букве
+			found_class, err := classes.Find(schedule.Class)
+			if err != nil {
+				// Отбрасываем расписание для несуществующего класса
+				day.Schedule = append(day.Schedule[:schedule_id], day.Schedule[schedule_id+1:]...)
+			} else {
+
+				schedule.Class = found_class.ToString()
+
+				for lesson_id, lesson := range schedule.Lessons {
+
+					// Проверяем наличие предмета, кабинета и учителя в данных из БД
+					if subjects.Contain(Subject{Name: lesson.Name}) && rooms.Contain(Room{Name: lesson.Room}) && teachers.Contain(lesson.Teacher) {
+						// Передаём учителю данные из БД
+
+						time_str := day.Date
+
+						if lesson.Number >= 1 && lesson.Number <= 8 {
+							switch {
+							case lesson.Number == 1:
+								time_str += " 8:30"
+							case lesson.Number == 2:
+								time_str += " 9:30"
+							case lesson.Number == 3:
+								time_str += " 10:30"
+							case lesson.Number == 4:
+								time_str += " 11:30"
+							case lesson.Number == 5:
+								time_str += " 12:30"
+							case lesson.Number == 6:
+								time_str += " 13:30"
+							case lesson.Number == 7:
+								time_str += " 14:30"
+							case lesson.Number == 8:
+								time_str += " 15:30"
+							}
+						} else {
+							return Generator_response{}, errors.New("wrong lesson number")
+						}
+
+						l_time, err := time.Parse("02.01.2006 15:04", time_str)
+						if err != nil {
+							return Generator_response{}, err
+						}
+
+						l_room, err := rooms.Find(lesson.Room)
+						if err != nil {
+							return Generator_response{}, err
+						}
+
+						l_teacher := lesson.Teacher
+
+						l_class, err := classes.Find(schedule.Class)
+						if err != nil {
+							return Generator_response{}, err
+						}
+
+						c_lesson := Class_lesson{Time: l_time, Name: lesson.Name, Room: l_room, Teacher: l_teacher}
+						classes_schedules[schedule.Class] = append(classes_schedules[schedule.Class], c_lesson)
+
+						t_lesson := Teacher_lesson{Time: l_time, Name: lesson.Name, Room: l_room, Class: l_class}
+						teachers_schedules[l_teacher.Login] = append(teachers_schedules[l_teacher.Login], t_lesson)
+
+					} else {
+						// Отбрасываем урок, если в БД нет данных о предмете или кабинете, или учителе
+						schedule.Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
+					}
+				}
+			}
+		}
+	}
+
+	return Generator_response{Classes: classes_schedules, Teachers: teachers_schedules}, nil
 }

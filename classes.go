@@ -213,13 +213,18 @@ func (classes *Classes) Contain(class Class) (res bool) {
 	return false
 }
 
-func (classes *Classes) Find(number int, character string) (class Class, err error) {
+func (classes *Classes) Find(name string) (class Class, err error) {
+
+	c, err := new(Class).Parse(name)
+	if err != nil {
+		return Class{}, err
+	}
 
 	for _, class := range *classes {
-		if character == class.Character && number == class.Number {
+		if c.Character == class.Character && c.Number == class.Number {
 			return class, nil
 		}
 	}
 
-	return Class{}, errors.New(fmt.Sprint("no class with number ", number, " and character ", character, " has found"))
+	return Class{}, errors.New("no class with name " + name + " has found")
 }
