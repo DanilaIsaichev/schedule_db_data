@@ -183,7 +183,7 @@ func Get_changed_schedule(start time.Time, parallel int) (Days, error) {
 	days := Days{}
 
 	// Запрашиваем расписание по дате
-	err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = " + start.Format("2006-01-02") + " AND parallel = " + fmt.Sprint(parallel) + ";").Scan(&days)
+	err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = '" + start.Format("2006-01-02") + "' AND parallel = " + fmt.Sprint(parallel) + ";").Scan(&days)
 	switch {
 	case err == sql.ErrNoRows:
 
