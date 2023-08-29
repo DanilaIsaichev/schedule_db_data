@@ -65,7 +65,7 @@ func Get_teachers() (Teachers, error) {
 
 		teacher := Teacher{}
 
-		err := result.Scan(&teacher.Id, &teacher.Name, &teacher.Login)
+		err := result.Scan(&teacher.Name, &teacher.Login)
 		if err != nil {
 			return Teachers{}, err
 		}
@@ -96,7 +96,7 @@ func Get_subjects() (Subjects, error) {
 
 		subject := Subject{}
 
-		err := result.Scan(&subject.Id, &subject.Name, &subject.Description)
+		err := result.Scan(&subject.Name, &subject.Description)
 		if err != nil {
 			return Subjects{}, err
 		}
@@ -127,7 +127,7 @@ func Get_rooms() (Rooms, error) {
 
 		room := Room{}
 
-		err := result.Scan(&room.Id, &room.Name, &room.Wing, &room.Floor)
+		err := result.Scan(&room.Name, &room.Wing, &room.Floor)
 		if err != nil {
 			return Rooms{}, err
 		}
@@ -158,7 +158,7 @@ func Get_classes() (Classes, error) {
 
 		class := Class{}
 
-		err := result.Scan(&class.Id, &class.Number, &class.Character)
+		err := result.Scan(&class.Number, &class.Character)
 		if err != nil {
 			return Classes{}, err
 		}
