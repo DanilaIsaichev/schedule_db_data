@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func get_db_env() (hostname string, name string, port string, user string, password string) {
+func get_db_env(user_type string) (hostname string, name string, port string, user string, password string) {
 
 	db_hostname := os.Getenv("DB_HOSTNAME")
 	if db_hostname == "" {
@@ -22,17 +22,34 @@ func get_db_env() (hostname string, name string, port string, user string, passw
 		db_port = "5432"
 	}
 
-	getter_name := os.Getenv("DB_GETTER_NAME")
-	if getter_name == "" {
-		getter_name = "getter"
+	user_name := ""
+	user_password := ""
+
+	if user_type == "setter" {
+		user_name = os.Getenv("DB_SETTER_NAME")
+		if user_name == "" {
+			user_name = "setter"
+		}
+
+		user_password := os.Getenv("DB_SETTER_PASSWORD")
+		if user_password == "" {
+			user_password = "123456"
+		}
+
+	} else {
+		user_name = os.Getenv("DB_GETTER_NAME")
+		if user_name == "" {
+			user_name = "getter"
+		}
+
+		user_password := os.Getenv("DB_GETTER_PASSWORD")
+		if user_password == "" {
+			user_password = "123456"
+		}
+
 	}
 
-	getter_password := os.Getenv("DB_GETTER_PASSWORD")
-	if getter_password == "" {
-		getter_password = "123456"
-	}
-
-	return db_hostname, db_name, db_port, getter_name, getter_password
+	return db_hostname, db_name, user_name, user_password, db_port
 }
 
 func DB_connection(hostname string, db_name string, username string, password string, port string) (db_conn *sql.DB, err error) {

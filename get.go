@@ -47,7 +47,7 @@ type Teacher_lessons []Teacher_lesson
 
 func Get_teachers() (Teachers, error) {
 
-	db, err := DB_connection(get_db_env())
+	db, err := DB_connection(get_db_env("getter"))
 	if err != nil {
 		return Teachers{}, err
 	}
@@ -78,7 +78,7 @@ func Get_teachers() (Teachers, error) {
 
 func Get_subjects() (Subjects, error) {
 
-	db, err := DB_connection(get_db_env())
+	db, err := DB_connection(get_db_env("getter"))
 	if err != nil {
 		return Subjects{}, err
 	}
@@ -109,7 +109,7 @@ func Get_subjects() (Subjects, error) {
 
 func Get_rooms() (Rooms, error) {
 
-	db, err := DB_connection(get_db_env())
+	db, err := DB_connection(get_db_env("getter"))
 	if err != nil {
 		return Rooms{}, err
 	}
@@ -140,7 +140,7 @@ func Get_rooms() (Rooms, error) {
 
 func Get_classes() (Classes, error) {
 
-	db, err := DB_connection(get_db_env())
+	db, err := DB_connection(get_db_env("getter"))
 	if err != nil {
 		return Classes{}, err
 	}
@@ -174,7 +174,7 @@ func Get_changed_schedule(start time.Time, parallel int) (Days, error) {
 	// ищем среди изменений
 
 	// Подключаемся к БД
-	db, err := DB_connection(get_db_env())
+	db, err := DB_connection(get_db_env("getter"))
 	if err != nil {
 		return Days{}, err
 	}
@@ -263,7 +263,7 @@ func Get_changed_schedule(start time.Time, parallel int) (Days, error) {
 func Get_base_schedule(year int, parallel int) (Days, error) {
 
 	// Подключаемся к БД
-	db, err := DB_connection(get_db_env())
+	db, err := DB_connection(get_db_env("getter"))
 	if err != nil {
 		return Days{}, err
 	}
@@ -361,7 +361,7 @@ func Get_editor_data(req Request) (Response, error) {
 	}
 
 	// Подключаемся к БД
-	db, err := DB_connection(get_db_env())
+	db, err := DB_connection(get_db_env("getter"))
 	if err != nil {
 		return Response{}, err
 	}
@@ -457,7 +457,7 @@ func Get_generator_data(req Request) (Generator_response, error) {
 	}
 
 	// Подключаемся к БД
-	db, err := DB_connection(get_db_env())
+	db, err := DB_connection(get_db_env("getter"))
 	if err != nil {
 		return Generator_response{}, err
 	}
