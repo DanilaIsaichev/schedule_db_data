@@ -23,8 +23,10 @@ type Response struct {
 }
 
 type Generator_response struct {
-	Classes  map[string]Class_lessons   `json:"classes"`
-	Teachers map[string]Teacher_lessons `json:"teachers"`
+	Classes          Classes                    `json:"classes"`
+	Teachers         Teachers                   `json:"teachers"`
+	Classes_lessons  map[string]Class_lessons   `json:"classes_lessons"`
+	Teachers_lessons map[string]Teacher_lessons `json:"teachers_lessons"`
 }
 
 type Class_lesson struct {
@@ -556,5 +558,5 @@ func Get_generator_data(req Request) (Generator_response, error) {
 		}
 	}
 
-	return Generator_response{Classes: classes_schedules, Teachers: teachers_schedules}, nil
+	return Generator_response{Classes: classes, Teachers: teachers, Classes_lessons: classes_schedules, Teachers_lessons: teachers_schedules}, nil
 }
