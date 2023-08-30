@@ -524,7 +524,7 @@ func Get_generator_data(req Request) (Generator_response, error) {
 							return Generator_response{}, errors.New("wrong lesson number")
 						}
 
-						l_time, err := time.Parse("02.01.2006 15:04", time_str)
+						l_time, err := time.Parse("2006-01-02 15:04", time_str)
 						if err != nil {
 							return Generator_response{}, err
 						}
