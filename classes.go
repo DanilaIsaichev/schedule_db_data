@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 type Class struct {
+	Id        int    `json:"id"`
 	Number    int    `json:"number"`
 	Character string `json:"character"`
 }
@@ -30,143 +30,6 @@ func (c *Class) Parse(class_string string) (class Class, err error) {
 }
 
 type Classes []Class
-
-// Сканер массива классов
-func (c *Classes) Scan(src interface{}) (err error) {
-
-	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
-	byte_str, err := scan_prepare(src)
-	if err != nil {
-		return err
-	}
-
-	// Считывание данных из массива байтов
-	err = c.scan_classes(byte_str)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Classes) scan_classes(src []byte) (err error) {
-
-	// Удаляем экранирование и лишние скобки в начале и конце
-	str := strings.ReplaceAll(string(src)[1:len(string(src))-1], "\\", "")
-	// Удаляем лишние кавычки
-	str = strings.ReplaceAll(str, "\"{", "{")
-	str = strings.ReplaceAll(str, "}\"", "}")
-	str = "[" + str + "]"
-
-	// Объявляем карту с строчным ключём и значением в виде интерфейса
-	var class_maps []map[string]interface{}
-
-	// Записываем значения в карту
-	err = json.Unmarshal([]byte(str), &class_maps)
-	if err != nil {
-		return err
-	}
-
-	classes_array := Classes{}
-
-	// Итерируемся по карте
-	for _, class_map := range class_maps {
-
-		class := Class{}
-
-		if class_map["number"] != nil {
-			if val, ok := class_map["number"].(float64); ok {
-				if int(val) >= 1 && int(val) <= 11 {
-					class.Number = int(val)
-				} else {
-					return errors.New("class number not in [1:11]")
-				}
-			} else {
-				return errors.New("couldn't convert 'number' to int")
-			}
-		} else {
-			return errors.New("class has no 'number'")
-		}
-
-		if class_map["character"] != nil {
-			if val, ok := class_map["character"].(string); ok {
-				if len([]rune(val)) == 1 {
-					class.Character = val
-				} else {
-					return errors.New("wrong class character")
-				}
-			} else {
-				return errors.New("couldn't convert 'character' to string")
-			}
-		} else {
-			return errors.New("class has no 'character'")
-		}
-
-		classes_array = append(classes_array, class)
-	}
-
-	*c = classes_array
-
-	return nil
-}
-
-func UnmarshalClass(src interface{}) (Classes, error) {
-
-	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
-	byte_str, err := scan_prepare(src)
-	if err != nil {
-		return Classes{}, err
-	}
-
-	// Объявляем карту с строчным ключём и значением в виде интерфейса
-	var class_maps []map[string]interface{}
-
-	// Записываем значения в карту
-	err = json.Unmarshal(byte_str, &class_maps)
-	if err != nil {
-		return Classes{}, err
-	}
-
-	c := Classes{}
-
-	for _, class_map := range class_maps {
-
-		class := Class{}
-
-		if class_map["number"] != nil {
-			if val, ok := class_map["number"].(float64); ok {
-				if int(val) >= 1 && int(val) <= 11 {
-					class.Number = int(val)
-				} else {
-					return Classes{}, errors.New("wrong class number")
-				}
-			} else {
-				return Classes{}, errors.New("couldn't convert class' number to int")
-			}
-		} else {
-			return Classes{}, errors.New("no class' number found")
-		}
-
-		if class_map["character"] != nil {
-			if val, ok := class_map["character"].(string); ok {
-				if len([]rune(val)) == 1 {
-					class.Character = val
-				} else {
-					return Classes{}, errors.New("wrong class character")
-				}
-			} else {
-				return Classes{}, errors.New("couldn't convert class character to string")
-			}
-		} else {
-			return Classes{}, errors.New("no class character found")
-		}
-
-		c = append(c, class)
-
-	}
-
-	return c, nil
-}
 
 func (classes *Classes) Contain(class Class) (res bool) {
 
@@ -193,4 +56,98 @@ func (classes *Classes) Find(name string) (class Class, err error) {
 	}
 
 	return Class{}, errors.New("no class with name " + name + " has found")
+}
+
+func Get_classes() (Classes, error) {
+
+	db, err := DB_connection(Get_db_env("getter"))
+	if err != nil {
+		return Classes{}, err
+	}
+	defer db.Close()
+
+	result, err := db.Query("SELECT * FROM class;")
+	if err != nil {
+		return Classes{}, err
+	}
+	defer result.Close()
+
+	classes := Classes{}
+
+	for result.Next() {
+
+		class := Class{}
+
+		err := result.Scan(&class.Id, &class.Number, &class.Character)
+		if err != nil {
+			return Classes{}, err
+		}
+
+		classes = append(classes, class)
+	}
+
+	return classes, nil
+}
+
+func Get_classes_by_parallel(parallel int) (Classes, error) {
+
+	db, err := DB_connection(Get_db_env("getter"))
+	if err != nil {
+		return Classes{}, err
+	}
+	defer db.Close()
+
+	result, err := db.Query(fmt.Sprint("SELECT * FROM class WHERE number = ", parallel, ";"))
+	if err != nil {
+		return Classes{}, err
+	}
+	defer result.Close()
+
+	classes := Classes{}
+
+	for result.Next() {
+
+		class := Class{}
+
+		err := result.Scan(&class.Id, &class.Number, &class.Character)
+		if err != nil {
+			return Classes{}, err
+		}
+
+		classes = append(classes, class)
+	}
+
+	return classes, nil
+}
+
+func Add_classes(buff []byte) error {
+
+	classes := Classes{}
+	err := json.Unmarshal(buff, &classes)
+	if err != nil {
+		return err
+	}
+
+	data_str := ""
+
+	for i, class := range classes {
+		data_str += fmt.Sprint("(", class.Number, ", '", class.Character, "')")
+		if i < len(classes)-1 {
+			data_str += ", "
+		}
+	}
+
+	db, err := DB_connection(Get_db_env("setter"))
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	insert_string := "INSERT INTO teacher (number, character) VALUES " + data_str + " ON CONFLICT (number, character) DO UPDATE SET number = EXCLUDED.number, character = EXCLUDED.character;"
+	_, err = db.Exec(insert_string)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

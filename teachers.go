@@ -3,135 +3,20 @@ package schedule_db_data
 import (
 	"encoding/json"
 	"errors"
-	"strings"
+	"fmt"
+	//_ "github.com/lib/pq"
 )
 
 type Teacher struct {
-	Name  string `json:"name"`
-	Login string `json:"login"`
+	Id         int    `json:"id"`
+	Login      string `json:"login"`
+	First_name string `json:"first_name"`
+	Last_name  string `json:"last_name"`
+	Patronymic string `json:"patronymic"`
+	Short_name string `json:"short_name"`
 }
 
 type Teachers []Teacher
-
-// Сканер массива учителей
-func (t *Teachers) Scan(src interface{}) (err error) {
-
-	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
-	byte_str, err := scan_prepare(src)
-	if err != nil {
-		return err
-	}
-
-	// Считывание данных из массива байтов
-	err = t.scan_teachers(byte_str)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (t *Teachers) scan_teachers(src []byte) (err error) {
-
-	// Удаляем экранирование и лишние скобки в начале и конце
-	str := strings.ReplaceAll(string(src)[1:len(string(src))-1], "\\", "")
-	// Удаляем лишние кавычки
-	str = strings.ReplaceAll(str, "\"{", "{")
-	str = strings.ReplaceAll(str, "}\"", "}")
-	str = "[" + str + "]"
-
-	// Объявляем карту с строчным ключём и значением в виде интерфейса
-	var teacher_maps []map[string]interface{}
-
-	// Записываем значения в карту
-	err = json.Unmarshal([]byte(str), &teacher_maps)
-	if err != nil {
-		return err
-	}
-
-	teachers_array := Teachers{}
-
-	// Итерируемся по карте
-	for _, teacher_map := range teacher_maps {
-
-		teacher := Teacher{}
-
-		if teacher_map["name"] != nil {
-			if val, ok := teacher_map["name"].(string); ok {
-				teacher.Name = val
-			} else {
-				return errors.New("couldn't convert 'name' to string")
-			}
-		} else {
-			return errors.New("teacher has no 'name'")
-		}
-
-		if teacher_map["login"] != nil {
-			if val, ok := teacher_map["login"].(string); ok {
-				teacher.Login = val
-			} else {
-				return errors.New("couldn't convert 'login' to string")
-			}
-		} else {
-			return errors.New("teacher has no 'login'")
-		}
-
-		teachers_array = append(teachers_array, teacher)
-	}
-
-	*t = teachers_array
-
-	return nil
-}
-
-func UnmarshalTeacher(src interface{}) (Teachers, error) {
-
-	// Приведение полученных данных к корректному виду (массив байтов без служебных символов)
-	byte_str, err := scan_prepare(src)
-	if err != nil {
-		return Teachers{}, err
-	}
-
-	// Объявляем массив карт со строчным ключём и значением в виде интерфейса
-	var teacher_maps []map[string]interface{}
-
-	// Записываем значения в массив карт
-	err = json.Unmarshal(byte_str, &teacher_maps)
-	if err != nil {
-		return Teachers{}, err
-	}
-
-	t := Teachers{}
-
-	for _, teacher_map := range teacher_maps {
-
-		teacher := Teacher{}
-
-		if teacher_map["login"] != nil {
-			if val, ok := teacher_map["login"].(string); ok {
-				teacher.Login = val
-			} else {
-				return Teachers{}, errors.New("couldn't convert teacher's login to string")
-			}
-		} else {
-			return Teachers{}, errors.New("no teacher's login found")
-		}
-
-		if teacher_map["name"] != nil {
-			if val, ok := teacher_map["name"].(string); ok {
-				teacher.Name = val
-			} else {
-				return Teachers{}, errors.New("couldn't convert teacher's name to string")
-			}
-		} else {
-			return Teachers{}, errors.New("no teacher's name found")
-		}
-
-		t = append(t, teacher)
-	}
-
-	return t, nil
-}
 
 func (teachers *Teachers) Contain(teacher Teacher) (res bool) {
 
@@ -144,7 +29,18 @@ func (teachers *Teachers) Contain(teacher Teacher) (res bool) {
 	return false
 }
 
-func (teachers *Teachers) Find(login string) (teacher Teacher, err error) {
+func (teachers *Teachers) Find_by_id(id int) (teacher Teacher, err error) {
+
+	for _, teacher := range *teachers {
+		if teacher.Id == id {
+			return teacher, nil
+		}
+	}
+
+	return Teacher{}, errors.New(fmt.Sprint("no teacher with id ", id, " has found"))
+}
+
+func (teachers *Teachers) Find_by_login(login string) (teacher Teacher, err error) {
 
 	for _, teacher := range *teachers {
 		if teacher.Login == login {
@@ -153,4 +49,67 @@ func (teachers *Teachers) Find(login string) (teacher Teacher, err error) {
 	}
 
 	return Teacher{}, errors.New("no teacher with login " + login + " has found")
+}
+
+func Get_teachers() (Teachers, error) {
+
+	db, err := DB_connection(Get_db_env("getter"))
+	if err != nil {
+		return Teachers{}, err
+	}
+	defer db.Close()
+
+	result, err := db.Query("SELECT * FROM teacher;")
+	if err != nil {
+		return Teachers{}, err
+	}
+	defer result.Close()
+
+	teachers := Teachers{}
+
+	for result.Next() {
+
+		teacher := Teacher{}
+
+		err := result.Scan(&teacher.Id, &teacher.Login, &teacher.First_name, &teacher.Last_name, &teacher.Patronymic, &teacher.Short_name)
+		if err != nil {
+			return Teachers{}, err
+		}
+
+		teachers = append(teachers, teacher)
+	}
+
+	return teachers, nil
+}
+
+func Add_teachers(buff []byte) error {
+
+	teachers := Teachers{}
+	err := json.Unmarshal(buff, &teachers)
+	if err != nil {
+		return err
+	}
+
+	data_str := ""
+
+	for i, teacher := range teachers {
+		data_str += fmt.Sprint("('", teacher.Login, "', '", teacher.First_name, "', '", teacher.Last_name, "', '", teacher.Patronymic, "', '", teacher.Short_name, "')")
+		if i < len(teachers)-1 {
+			data_str += ", "
+		}
+	}
+
+	db, err := DB_connection(Get_db_env("setter"))
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	insert_string := "INSERT INTO teacher (login, first_name, last_name, patronymic, short_name) VALUES " + data_str + " ON CONFLICT (login) DO UPDATE SET login = EXCLUDED.login, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, patronymic = EXCLUDED.patronymic, short_name = EXCLUDED.short_name;"
+	_, err = db.Exec(insert_string)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -1,10 +1,14 @@
 package schedule_db_data
 
 type Lesson struct {
-	Number  int     `json:"number"`
-	Name    string  `json:"name"`
-	Room    string  `json:"room"`
-	Teacher Teacher `json:"teacher"`
+	Number      int         `json:"number"`
+	Subject     Subject     `json:"subject"`
+	Lesson_data Lesson_data `json:"lesson_data"`
 }
 
 type Lessons []Lesson
+
+type Lesson_data []struct {
+	Room    Room    `json:"rooms"`
+	Teacher Teacher `json:"teachers"`
+}
