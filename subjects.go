@@ -93,7 +93,7 @@ func Add_subjects(buff []byte) error {
 	}
 	defer db.Close()
 
-	insert_string := "INSERT INTO subject (name, short_name, description) VALUES " + data_str + " ON CONFLICT (name, short_name) DO UPDATE SET name = EXCLUDED.name, short_name = EXCLUDED.short_name, description = EXCLUDED.description;"
+	insert_string := "INSERT INTO subject (name, short_name, groups, description) VALUES " + data_str + " ON CONFLICT (name, short_name) DO UPDATE SET name = EXCLUDED.name, short_name = EXCLUDED.short_name, groups = EXCLUDED.groups, description = EXCLUDED.description;"
 	_, err = db.Exec(insert_string)
 	if err != nil {
 		return err
