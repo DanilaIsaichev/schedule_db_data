@@ -2,7 +2,6 @@ package schedule_db_data
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 )
@@ -189,7 +188,7 @@ func Get_base_schedule(year int, parallel int) (Days, error) {
 // Универсальная функция для получения структуры ответа по структуре запроса
 func Get_editor_data(req Request) (Response, error) {
 
-	classes, err := Get_classes()
+	classes, err := Get_classes_by_parallel(req.Parallel)
 	if err != nil {
 		return Response{}, err
 	}
@@ -253,27 +252,23 @@ func Get_editor_data(req Request) (Response, error) {
 				schedule.Class = found_class.ToString()
 				for lesson_id, lesson := range schedule.Lessons {
 
-					if len(lesson.Lesson_data) == lesson.Subject.Groups {
+					for l_data_id := range lesson.Lesson_data {
 
-						for l_data_id := range lesson.Lesson_data {
+						// Проверяем наличие предмета, кабинета и учителя в данных из БД
+						if subjects.Contain(lesson.Subject) && rooms.Contain(lesson.Lesson_data[l_data_id].Room) && teachers.Contain(lesson.Lesson_data[l_data_id].Teacher) {
 
-							// Проверяем наличие предмета, кабинета и учителя в данных из БД
-							if subjects.Contain(lesson.Subject) && rooms.Contain(lesson.Lesson_data[l_data_id].Room) && teachers.Contain(lesson.Lesson_data[l_data_id].Teacher) {
-
-								// Передаём учителю данные из БД
-								days[day_id].Schedule[schedule_id].Lessons[lesson_id].Lesson_data[l_data_id].Teacher, err = teachers.Find_by_login(lesson.Lesson_data[l_data_id].Teacher.Login)
-								if err != nil {
-									// Отбрасываем урок, если в БД нет данных об учителе
-									days[day_id].Schedule[schedule_id].Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
-								}
-							} else {
-								// Отбрасываем урок, если в БД нет данных о предмете или кабинете, или учителе
+							// Передаём учителю данные из БД
+							days[day_id].Schedule[schedule_id].Lessons[lesson_id].Lesson_data[l_data_id].Teacher, err = teachers.Find_by_login(lesson.Lesson_data[l_data_id].Teacher.Login)
+							if err != nil {
+								// Отбрасываем урок, если в БД нет данных об учителе
 								days[day_id].Schedule[schedule_id].Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
 							}
+						} else {
+							// Отбрасываем урок, если в БД нет данных о предмете или кабинете, или учителе
+							days[day_id].Schedule[schedule_id].Lessons = append(schedule.Lessons[:lesson_id], schedule.Lessons[lesson_id+1:]...)
 						}
-					} else {
-						return Response{}, errors.New("wrong lesson data")
 					}
+
 				}
 			}
 		}

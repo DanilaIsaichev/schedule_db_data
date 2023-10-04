@@ -9,6 +9,6 @@ type Lesson struct {
 type Lessons []Lesson
 
 type Lesson_data []struct {
-	Room    Room    `json:"rooms"`
-	Teacher Teacher `json:"teachers"`
+	Room    Room    `json:"room"`
+	Teacher Teacher `json:"teacher"`
 }

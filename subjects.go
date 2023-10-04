@@ -11,7 +11,6 @@ type Subject struct {
 	Id          int    `json:"id"`
 	Name        string `json:"name"`
 	Short_name  string `json:"short_name"`
-	Groups      int    `json:"groups"`
 	Description string `json:"description"`
 }
 
@@ -59,7 +58,7 @@ func Get_subjects() (Subjects, error) {
 
 		subject := Subject{}
 
-		err := result.Scan(&subject.Id, &subject.Name, &subject.Short_name, &subject.Groups, &subject.Description)
+		err := result.Scan(&subject.Id, &subject.Name, &subject.Short_name, &subject.Description)
 		if err != nil {
 			return Subjects{}, err
 		}
@@ -81,7 +80,7 @@ func Add_subjects(buff []byte) error {
 	data_str := ""
 
 	for i, subject := range subjects {
-		data_str += fmt.Sprint("('", subject.Name, "', '", subject.Short_name, "', ", subject.Groups, ", '", subject.Description, "')")
+		data_str += fmt.Sprint("('", subject.Name, "', '", subject.Short_name, ", '", subject.Description, "')")
 		if i < len(subjects)-1 {
 			data_str += ", "
 		}
@@ -93,7 +92,7 @@ func Add_subjects(buff []byte) error {
 	}
 	defer db.Close()
 
-	insert_string := "INSERT INTO subject (name, short_name, groups, description) VALUES " + data_str + " ON CONFLICT (name, short_name) DO UPDATE SET name = EXCLUDED.name, short_name = EXCLUDED.short_name, groups = EXCLUDED.groups, description = EXCLUDED.description;"
+	insert_string := "INSERT INTO subject (name, short_name, description) VALUES " + data_str + " ON CONFLICT (name, short_name) DO UPDATE SET name = EXCLUDED.name, short_name = EXCLUDED.short_name, description = EXCLUDED.description;"
 	_, err = db.Exec(insert_string)
 	if err != nil {
 		return err
