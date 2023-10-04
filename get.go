@@ -2,6 +2,7 @@ package schedule_db_data
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -205,7 +206,7 @@ func Get_editor_data(req Request) (Response, error) {
 
 	subjects, err := Get_subjects()
 	if err != nil {
-		return Response{}, err
+		return Response{}, errors.New("get subj err")
 	}
 
 	// Подключаемся к БД
