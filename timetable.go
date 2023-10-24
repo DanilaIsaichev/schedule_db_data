@@ -7,8 +7,8 @@ import (
 )
 
 type Lesson_time struct {
-	Id   int       `json:"id"`
-	Time time.Time `jsqon: "time"`
+	Id    int       `json:"id"`
+	Start time.Time `jsqon: "start"`
 }
 
 type Timetable []Lesson_time
@@ -16,7 +16,7 @@ type Timetable []Lesson_time
 func (t *Timetable) Get_lesson_time_by_number(id int) (time.Time, error) {
 
 	if id > 0 {
-		return (*t)[id-1].Time, nil
+		return (*t)[id-1].Start, nil
 	} else {
 		return time.Time{}, errors.New(fmt.Sprint("Lesson's number can't be ", id))
 	}
@@ -41,7 +41,7 @@ func Get_timetable() (Timetable, error) {
 
 		lesson_time := Lesson_time{}
 
-		err := result.Scan(&lesson_time.Id, &lesson_time.Time)
+		err := result.Scan(&lesson_time.Id, &lesson_time.Start)
 		if err != nil {
 			return Timetable{}, err
 		}
@@ -67,7 +67,7 @@ func Get_time_by_number(id int) (Lesson_time, error) {
 
 	lesson_time := Lesson_time{}
 
-	err = result.Scan(&lesson_time.Id, &lesson_time.Time)
+	err = result.Scan(&lesson_time.Id, &lesson_time.Start)
 	if err != nil {
 		return Lesson_time{}, err
 	}

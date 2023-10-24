@@ -1,7 +1,7 @@
 package schedule_db_data
 
 type Schedule struct {
-	Class   string  `json:"class"`
+	Group   string  `json:"group"`
 	Lessons Lessons `json:"lessons"`
 }
 

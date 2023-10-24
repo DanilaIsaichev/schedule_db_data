@@ -27,7 +27,7 @@ func (subjects *Subjects) Contain(subject Subject) (res bool) {
 	return false
 }
 
-func (subjects *Subjects) Find(name string) (class Subject, err error) {
+func (subjects *Subjects) Find(name string) (subject Subject, err error) {
 
 	for _, subject := range *subjects {
 		if name == subject.Name {
@@ -35,7 +35,7 @@ func (subjects *Subjects) Find(name string) (class Subject, err error) {
 		}
 	}
 
-	return Subject{}, errors.New("no subject with name " + name + " has found")
+	return Subject{}, errors.New("no Subject with name " + name + " has found")
 }
 
 func Get_subjects() (Subjects, error) {

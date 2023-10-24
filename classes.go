@@ -7,34 +7,34 @@ import (
 	"strconv"
 )
 
-type Class struct {
-	Id        int    `json:"id"`
-	Number    int    `json:"number"`
-	Character string `json:"character"`
+type Group struct {
+	Id         int    `json:"id"`
+	YearNumber int    `json:"yearNumber"`
+	Character  string `json:"character"`
 }
 
-func (c *Class) ToString() (class string) {
-	return fmt.Sprint(c.Number, c.Character)
+func (g *Group) ToString() (class string) {
+	return fmt.Sprint(g.YearNumber, g.Character)
 }
 
-func (c *Class) Parse(class_string string) (class Class, err error) {
+func (g *Group) Parse(class_string string) (class Group, err error) {
 
-	c.Number, err = strconv.Atoi(class_string[:len(class_string)-2])
+	g.YearNumber, err = strconv.Atoi(class_string[:len(class_string)-2])
 	if err != nil {
-		return Class{}, err
+		return Group{}, err
 	}
 
-	c.Character = class_string[len(class_string)-2:]
+	g.Character = class_string[len(class_string)-2:]
 
-	return *c, nil
+	return *g, nil
 }
 
-type Classes []Class
+type Groups []Group
 
-func (classes *Classes) Contain(class Class) (res bool) {
+func (groups *Groups) Contain(group Group) (res bool) {
 
-	for _, c := range *classes {
-		if c.Character == class.Character && c.Number == class.Number {
+	for _, g := range *groups {
+		if g.Character == group.Character && g.YearNumber == group.YearNumber {
 			return true
 		}
 	}
@@ -42,97 +42,97 @@ func (classes *Classes) Contain(class Class) (res bool) {
 	return false
 }
 
-func (classes *Classes) Find(name string) (class Class, err error) {
+func (groups *Groups) Find(name string) (group Group, err error) {
 
-	c, err := new(Class).Parse(name)
+	g, err := new(Group).Parse(name)
 	if err != nil {
-		return Class{}, err
+		return Group{}, err
 	}
 
-	for _, class := range *classes {
-		if c.Character == class.Character && c.Number == class.Number {
-			return class, nil
+	for _, group := range *groups {
+		if g.Character == group.Character && g.YearNumber == group.YearNumber {
+			return group, nil
 		}
 	}
 
-	return Class{}, errors.New("no class with name " + name + " has found")
+	return Group{}, errors.New("no Group with name " + name + " has found")
 }
 
-func Get_classes() (Classes, error) {
+func Get_groups() (Groups, error) {
 
 	db, err := DB_connection(Get_db_env("getter"))
 	if err != nil {
-		return Classes{}, err
+		return Groups{}, err
 	}
 	defer db.Close()
 
-	result, err := db.Query("SELECT * FROM class;")
+	result, err := db.Query("SELECT * FROM groups;")
 	if err != nil {
-		return Classes{}, err
+		return Groups{}, err
 	}
 	defer result.Close()
 
-	classes := Classes{}
+	groups := Groups{}
 
 	for result.Next() {
 
-		class := Class{}
+		group := Group{}
 
-		err := result.Scan(&class.Id, &class.Number, &class.Character)
+		err := result.Scan(&group.Id, &group.YearNumber, &group.Character)
 		if err != nil {
-			return Classes{}, err
+			return Groups{}, err
 		}
 
-		classes = append(classes, class)
+		groups = append(groups, group)
 	}
 
-	return classes, nil
+	return groups, nil
 }
 
-func Get_classes_by_parallel(parallel int) (Classes, error) {
+func Get_groups_by_year(year int) (Groups, error) {
 
 	db, err := DB_connection(Get_db_env("getter"))
 	if err != nil {
-		return Classes{}, err
+		return Groups{}, err
 	}
 	defer db.Close()
 
-	result, err := db.Query(fmt.Sprint("SELECT * FROM class WHERE number = ", parallel, ";"))
+	result, err := db.Query(fmt.Sprint("SELECT * FROM groups WHERE yearNumber = ", year, ";"))
 	if err != nil {
-		return Classes{}, err
+		return Groups{}, err
 	}
 	defer result.Close()
 
-	classes := Classes{}
+	groups := Groups{}
 
 	for result.Next() {
 
-		class := Class{}
+		group := Group{}
 
-		err := result.Scan(&class.Id, &class.Number, &class.Character)
+		err := result.Scan(&group.Id, &group.YearNumber, &group.Character)
 		if err != nil {
-			return Classes{}, err
+			return Groups{}, err
 		}
 
-		classes = append(classes, class)
+		groups = append(groups, group)
 	}
 
-	return classes, nil
+	return groups, nil
 }
 
-func Add_classes(buff []byte) error {
+func Add_groups(buff []byte) error {
 
-	classes := Classes{}
-	err := json.Unmarshal(buff, &classes)
+	groups := Groups{}
+	err := json.Unmarshal(buff, &groups)
 	if err != nil {
 		return err
 	}
 
 	data_str := ""
 
-	for i, class := range classes {
-		data_str += fmt.Sprint("(", class.Number, ", '", class.Character, "')")
-		if i < len(classes)-1 {
+	for i, group := range groups {
+		data_str += fmt.Sprint("(", group.YearNumber, ", '", group.Character, "')")
+		if i < len(groups)-1 {
 			data_str += ", "
 		}
 	}
@@ -143,7 +143,7 @@ func Add_classes(buff []byte) error {
 	}
 	defer db.Close()
 
-	insert_string := "INSERT INTO teacher (number, character) VALUES " + data_str + " ON CONFLICT (number, character) DO UPDATE SET number = EXCLUDED.number, character = EXCLUDED.character;"
+	insert_string := "INSERT INTO groups (yearNumber, character) VALUES " + data_str + " ON CONFLICT (yearNumber, character) DO UPDATE SET yearNumber = EXCLUDED.yearNumber, character = EXCLUDED.character;"
 	_, err = db.Exec(insert_string)
 	if err != nil {
 		return err

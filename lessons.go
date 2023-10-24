@@ -1,9 +1,9 @@
 package schedule_db_data
 
 type Lesson struct {
-	Number      int         `json:"number"`
-	Subject     Subject     `json:"subject"`
-	Lesson_data Lesson_data `json:"lesson_data"`
+	SerialNumber int         `json:"serialNumber"`
+	Subject      Subject     `json:"subject"`
+	Lesson_data  Lesson_data `json:"lesson_data"`
 }
 
 type Lessons []Lesson
