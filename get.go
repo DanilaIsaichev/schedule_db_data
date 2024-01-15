@@ -51,19 +51,20 @@ func Get_editor_data(req Request) (Response, error) {
 	}
 	defer db.Close()
 
-	days := Days{}
+	var buff []byte
 
+	//TODO: сканировать в буффер, после чего использовать Get_days() для парсинга
 	if req.Is_base {
-		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = True AND year = " + fmt.Sprint(req.Year) + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
+		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = True AND year = " + fmt.Sprint(req.Year) + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&buff)
 		if err == sql.ErrNoRows {
 			return Response{Teachers: teachers, Groups: groups, Rooms: rooms, Subjects: subjects, Days: Days{}}, err
 		} else if err != nil {
 			return Response{}, err
 		}
 	} else {
-		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = '" + req.Start.Format("2006-01-02") + "' AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
+		err = db.QueryRow("SELECT data FROM schedule WHERE is_base = False AND start = '" + req.Start.Format("2006-01-02") + "' AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&buff)
 		if err == sql.ErrNoRows {
-			err = db.QueryRow("SELECT data FROM schedule WHERE is_base = True AND year = " + fmt.Sprint(req.Year) + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&days)
+			err = db.QueryRow("SELECT data FROM schedule WHERE is_base = True AND year = " + fmt.Sprint(req.Year) + " AND parallel = " + fmt.Sprint(req.Parallel) + ";").Scan(&buff)
 			if err == sql.ErrNoRows {
 				return Response{Teachers: teachers, Groups: groups, Rooms: rooms, Subjects: subjects, Days: Days{}}, err
 			} else if err != nil {
@@ -72,6 +73,11 @@ func Get_editor_data(req Request) (Response, error) {
 		} else if err != nil {
 			return Response{}, err
 		}
+	}
+
+	days, err := Get_days(buff)
+	if err != nil {
+		return Response{}, err
 	}
 
 	// Проверка существования классов, учителей, кабинетов и предметов
