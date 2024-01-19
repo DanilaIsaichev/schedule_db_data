@@ -19,7 +19,7 @@ type Subjects []Subject
 func (subjects *Subjects) Contain(subject Subject) (res bool) {
 
 	for _, s := range *subjects {
-		if s.Name == subject.Name {
+		if s.Id == subject.Id && s.Name == subject.Name && s.Short_name == subject.Short_name {
 			return true
 		}
 	}
