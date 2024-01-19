@@ -27,17 +27,6 @@ func (subjects *Subjects) Contain(subject Subject) (res bool) {
 	return false
 }
 
-func (subjects *Subjects) IsUniqueByNames(subject Subject) (res bool) {
-
-	for _, s := range *subjects {
-		if s.Name == subject.Name && s.Short_name == subject.Short_name {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (subjects *Subjects) Find(name string) (subject Subject, err error) {
 
 	for _, subject := range *subjects {
